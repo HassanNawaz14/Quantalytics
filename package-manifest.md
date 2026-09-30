@@ -1,0 +1,14 @@
+# Quantalytics Phase 2 Documentation Package — SHA-256 Manifest
+
+Generated after documentation QA. Hashes cover the exact packaged Markdown bytes.
+
+```text
+a1984b40244f8ccf98c0ed410e2ce3c2f5f7cda8aa65efefb90450e78a49dab2  README.md
+cc83b729fa4d486fe165f2fea7d15d4abee8e31faa77a22b8a7de8c14b02613d  docs/architecture/phase2-architecture.md
+4a43b6e9e16160b181b7a92058f78b3d7367cdad72fbde39b3f4768c72e25066  docs/data_contracts/bronze-silver-data-contract.md
+640435154a5cb2944fbce4d851b2fe78ad0b27d3582542f66b4e8ede6e277533  docs/decisions/architecture-decision-records.md
+0d92b65fb08c377bc4e959ed442c3c285892027cdf510db31f9063922f262aa8  docs/operations/pipeline-runbook.md
+4bdd1ae045d9b7db7a704f304f8d3101da5b15584845f4073944ca1c459febde  docs/phase2/documentation-qa-report.md
+0d5ac552189c6d965a6ff8a14716c63d48ccf89eedb4d14c4d933eae78cbd087  docs/research/phase2-to-gold-contract.md
+226e3034f3b21747874743c584bcf41b0dd02520b7e459e2ce6f9ef27bade699  docs/testing/phase2-test-plan.md
+```
