@@ -1,11 +1,23 @@
+
 name: NOAA data collector
 
 on:
-  # Weekly on Monday at 03:30 UTC (08:30 Pakistan time).
-  # This is offset from the IBM workflow's Monday 03:00 UTC schedule.
+  # Scheduled incremental collection every Monday at 03:30 UTC
   schedule:
     - cron: "30 3 * * 1"
+
+  # Manual runs allow smoke, historical full load, or incremental updates
   workflow_dispatch:
+    inputs:
+      mode:
+        description: "smoke = connection/test | full = one-time historical backfill | incremental = new data"
+        type: choice
+        options:
+          - smoke
+          - full
+          - incremental
+        default: smoke
+        required: true
 
 permissions:
   contents: read
@@ -15,12 +27,17 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  # Change workspace only if your existing IBM setup uses another catalog.
   VOLUME: dbfs:/Volumes/workspace/landing/staging/noaa
+
+  # Manual runs use the selected mode; scheduled runs use incremental.
+  MODE: ${{ github.event.inputs.mode || 'incremental' }}
 
 jobs:
   collect:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
+
     env:
       DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
       DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
@@ -33,37 +50,111 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+
+      - name: Install Python packages
+        run: |
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt
+          fi
 
       - name: Install Databricks CLI
         uses: databricks/setup-cli@main
 
       - name: Check the Databricks connection
-        run: databricks fs ls dbfs:/Volumes/workspace/landing/staging
+        run: databricks fs ls "$VOLUME"
 
       - name: Create NOAA staging folders
         run: |
           databricks fs mkdir "$VOLUME/new"
           databricks fs mkdir "$VOLUME/processed"
+          databricks fs mkdir "$VOLUME/_state"
 
-      - name: Collect NOAA feeds
-        run: python ingestion/noaa_collect.py --out-dir output
-
-      - name: Upload NOAA batch to Databricks
+      - name: Prevent a duplicate historical full load
+        if: env.MODE == 'full'
         run: |
-          shopt -s nullglob
-          files=(output/noaa_*.jsonl)
-          if [ ${#files[@]} -eq 0 ]; then
-            echo "No NOAA output file was produced. Stopping."
+          if databricks fs ls "$VOLUME/_state/noaa_watermark.json" \
+              > /dev/null 2>&1; then
+            echo "A NOAA watermark already exists."
+            echo "The full backfill is restricted to one run."
+            echo "Use incremental mode, or deliberately repair the state first."
             exit 1
           fi
+
+      - name: Run smoke test
+        if: env.MODE == 'smoke'
+        run: |
+          python ingestion/noaa_collect.py \
+            --mode smoke \
+            --out-dir output
+
+      - name: Download the saved NOAA watermark
+        if: env.MODE == 'incremental'
+        run: |
+          mkdir -p state
+          databricks fs cp \
+            "$VOLUME/_state/noaa_watermark.json" \
+            state/noaa_watermark.json
+
+      - name: Collect historical or incremental NOAA data
+        if: env.MODE != 'smoke'
+        run: |
+          mkdir -p output
+
+          if [ "$MODE" = "incremental" ]; then
+            python ingestion/noaa_collect.py \
+              --mode incremental \
+              --watermark-in state/noaa_watermark.json \
+              --out-dir output
+          else
+            python ingestion/noaa_collect.py \
+              --mode full \
+              --out-dir output
+          fi
+
+      - name: Upload NOAA data and then commit the watermark
+        if: env.MODE != 'smoke'
+        run: |
+          set -e
+          shopt -s nullglob
+
+          files=(output/noaa_*.jsonl)
+
+          if [ ${#files[@]} -eq 0 ]; then
+            if [ "$MODE" = "full" ]; then
+              echo "Full backfill produced no data batch; failing safely."
+              exit 1
+            fi
+
+            echo "No new NOAA batch was produced."
+            echo "The saved watermark will not be changed."
+            exit 0
+          fi
+
+          # Upload every data batch first. Any failed copy stops this step.
           for f in "${files[@]}"; do
+            echo "Uploading $f"
             databricks fs cp "$f" "$VOLUME/new/$(basename "$f")"
           done
 
-      - name: Keep a copy of the batch for 14 days
+          # A batch must exist before a new watermark can be committed.
+          if [ ! -f output/noaa_watermark.json ]; then
+            echo "Collector did not produce output/noaa_watermark.json."
+            echo "Refusing to advance the saved watermark."
+            exit 1
+          fi
+
+          # Commit the watermark LAST, after every batch upload succeeds.
+          databricks fs cp \
+            output/noaa_watermark.json \
+            "$VOLUME/_state/noaa_watermark.json" \
+            --overwrite
+
+      - name: Keep run output for 14 days
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: noaa-jsonl-batch
-          path: output/noaa_*.jsonl
+          name: noaa-${{ env.MODE }}-${{ github.run_id }}
+          path: output/
           retention-days: 14
-          if-no-files-found: error
+          if-no-files-found: ignore
