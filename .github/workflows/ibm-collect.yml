@@ -1,0 +1,109 @@
+name: IBM data collector
+
+on:
+  # Every Monday at 03:00 UTC (08:00 Pakistan time)
+  schedule:
+    - cron: "0 3 * * 1"
+  # The "Run workflow" button on the Actions page
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "smoke = test only | full = one-time history | incremental = new data only"
+        type: choice
+        options:
+          - smoke
+          - incremental
+          - full
+        default: smoke
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ibm-collect
+  cancel-in-progress: false
+
+env:
+  # Scheduled runs have no button input, so they always do an incremental load
+  MODE: ${{ github.event.inputs.mode || 'incremental' }}
+  # Where the files go in Databricks (change "workspace" if your catalog has another name)
+  VOLUME: dbfs:/Volumes/workspace/landing/staging/ibm
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python packages
+        run: pip install -r requirements.txt
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Check the Databricks connection
+        run: databricks fs ls "$VOLUME"
+
+      - name: Full load safety check (only allowed once)
+        if: env.MODE == 'full'
+        run: |
+          if databricks fs ls "$VOLUME/_state/watermark.json" > /dev/null 2>&1; then
+            echo "A full load was already done (watermark.json exists). Stopping so data is not loaded twice."
+            exit 1
+          fi
+
+      - name: Smoke test (IBM connection only)
+        if: env.MODE == 'smoke'
+        env:
+          IBM_QUANTUM_API_KEY: ${{ secrets.IBM_QUANTUM_API_KEY }}
+          IBM_QUANTUM_INSTANCE: ${{ secrets.IBM_QUANTUM_INSTANCE }}
+        run: python ingestion/ibm_collect.py --mode smoke
+
+      - name: Download the last watermark
+        if: env.MODE == 'incremental'
+        run: |
+          mkdir -p state
+          databricks fs cp "$VOLUME/_state/watermark.json" state/watermark.json
+
+      - name: Collect data from IBM
+        if: env.MODE != 'smoke'
+        env:
+          IBM_QUANTUM_API_KEY: ${{ secrets.IBM_QUANTUM_API_KEY }}
+          IBM_QUANTUM_INSTANCE: ${{ secrets.IBM_QUANTUM_INSTANCE }}
+        run: python ingestion/ibm_collect.py --mode "$MODE" --out-dir output
+
+      - name: Upload the CSV to Databricks
+        if: env.MODE != 'smoke'
+        run: |
+          shopt -s nullglob
+          files=(output/ibm_*.csv)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No new data this time. Nothing to upload."
+            exit 0
+          fi
+          for f in "${files[@]}"; do
+            databricks fs cp "$f" "$VOLUME/new/$(basename "$f")"
+          done
+          # The watermark is saved LAST, only after the CSV upload worked
+          databricks fs cp output/watermark.json "$VOLUME/_state/watermark.json" --overwrite
+
+      - name: Keep a copy of the CSV for 14 days
+        if: env.MODE != 'smoke'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ibm-${{ env.MODE }}-csv
+          path: output/
+          retention-days: 14
+          if-no-files-found: ignore
