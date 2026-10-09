@@ -1,0 +1,69 @@
+name: NOAA data collector
+
+on:
+  # Weekly on Monday at 03:30 UTC (08:30 Pakistan time).
+  # This is offset from the IBM workflow's Monday 03:00 UTC schedule.
+  schedule:
+    - cron: "30 3 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: noaa-collect
+  cancel-in-progress: false
+
+env:
+  VOLUME: dbfs:/Volumes/workspace/landing/staging/noaa
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      DATABRICKS_HOST: ${{ secrets.DATABRICKS_HOST }}
+      DATABRICKS_TOKEN: ${{ secrets.DATABRICKS_TOKEN }}
+
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Databricks CLI
+        uses: databricks/setup-cli@main
+
+      - name: Check the Databricks connection
+        run: databricks fs ls dbfs:/Volumes/workspace/landing/staging
+
+      - name: Create NOAA staging folders
+        run: |
+          databricks fs mkdir "$VOLUME/new"
+          databricks fs mkdir "$VOLUME/processed"
+
+      - name: Collect NOAA feeds
+        run: python ingestion/noaa_collect.py --out-dir output
+
+      - name: Upload NOAA batch to Databricks
+        run: |
+          shopt -s nullglob
+          files=(output/noaa_*.jsonl)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No NOAA output file was produced. Stopping."
+            exit 1
+          fi
+          for f in "${files[@]}"; do
+            databricks fs cp "$f" "$VOLUME/new/$(basename "$f")"
+          done
+
+      - name: Keep a copy of the batch for 14 days
+        uses: actions/upload-artifact@v4
+        with:
+          name: noaa-jsonl-batch
+          path: output/noaa_*.jsonl
+          retention-days: 14
+          if-no-files-found: error
