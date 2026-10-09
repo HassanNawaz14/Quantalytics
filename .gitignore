@@ -1,0 +1,11 @@
+# Secrets - never upload these
+.env
+*.env
+
+# Files made while testing
+output/
+state/
+__pycache__/
+*.pyc
+.venv/
+venv/
