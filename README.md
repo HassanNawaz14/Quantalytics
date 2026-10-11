@@ -25,9 +25,63 @@ Gold analytics and the dashboard are **not** part of Phase 2.
 | `spark/silver/tests/` | Schema-drift, quarantine and Silver QA notebooks. |
 | `data/` | Small samples (`data/sample/`) and generation scripts. |
 
+## Workflow:
+```mermaid
+flowchart LR
+  subgraph SRC["Sources"]
+    IBM["IBM Quantum API"]
+    NOAA["NOAA SWPC"]
+  end
+  subgraph GH["GitHub Actions"]
+    CI["ibm-collect.yml / noaa-collect.yml<br/>schedule or manual: smoke · full · incremental"]
+    COL["ingestion/*_collect.py"]
+  end
+  subgraph DBX["Databricks (workspace catalog)"]
+    VOL[("Staging volume<br/>new/ · processed/ · rejected/ · _state")]
+    B["Raw → Bronze notebooks"]
+    BR[("Bronze Delta tables")]
+    S["Bronze → Silver notebook<br/>full · incremental · backfill"]
+    SV[("Silver Delta tables")]
+    Q[("quarantined_records")]
+    L[("pipeline_execution_logs")]
+  end
+  CI --> COL
+  IBM --> COL
+  NOAA --> COL
+  COL -- "Databricks CLI upload" --> VOL
+  VOL --> B --> BR --> S --> SV
+  S --> Q
+  B --> L
+  S --> L
+  SV -.-> G["Gold & dashboard (Phase 3)"]
+```
+
 ## 2. Data models
 
 All tables live in the `workspace` catalog. **Delta Lake does not enforce primary keys.** The *primary key* below is the logical key the pipeline relies on, and the column "How it is enforced" says what actually prevents duplicates.
+
+### 2.0 Data model diagram
+ 
+<p align="center">
+  <img src="docs/diagrams/quantalytics_data_models.png"
+       alt="Quantalytics data models: Raw files, Bronze, Silver and operational tables with lineage"
+       width="100%">
+</p>
+
+<p align="center"><em>Figure 1 - Raw → Bronze → Silver data models and operational tables. Arrows show lineage (derived column → its origin), not enforced foreign keys. <code>[pk]</code> marks the logical primary key; Delta Lake does not enforce keys.</em>
+</p>
+
+* 📄 [Download the diagram as PDF](docs/diagrams/quantalytics_data_models.pdf)
+* 🧩 [Diagram source (DBML)](docs/diagrams/quantalytics_data_models.dbml)
+* 🔗 [Interactive diagram on dbdiagram.io](https://dbdiagram.io/d/6abd5a0babcc87fb7ab81c2d)
+
+| Layer | Tables |
+| --- | --- |
+| Raw (staging volume files) | `raw.ibm_csv_file`, `raw.noaa_jsonl_file` |
+| Bronze | `bronze.ibm_calibration_raw`, `bronze.noaa_space_weather_raw` |
+| Silver | `silver.ibm_qubit_calibration`, `silver.noaa_environment` |
+| Operational | `silver.pipeline_execution_logs`, `silver.quarantined_records` |
+ 
 
 ### 2.1 Raw input schemas (explicit `StructType`, no `inferSchema`)
 
