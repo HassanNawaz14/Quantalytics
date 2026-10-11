@@ -1,0 +1,204 @@
+// =============================================================================
+// Quantalytics - Phase 2 data models (Raw -> Bronze -> Silver + operational tables)
+// Paste this whole file into https://dbdiagram.io/d  (left editor), then
+// Export -> PNG and Export -> PDF.
+//
+// Notes on reading the diagram
+//  * Delta Lake does not enforce primary keys. [pk] below = the LOGICAL key the
+//    pipeline relies on (see README section 2).
+//  * Arrows are LINEAGE (which table a column is derived from / traced back to),
+//    not enforced foreign keys.
+//  * Types are the Spark/Delta types used in the notebooks.
+// =============================================================================
+
+Project Quantalytics {
+  database_type: 'Delta Lake (Databricks)'
+  Note: '''
+  **Quantalytics - Phase 2 (Medallion: Raw -> Bronze -> Silver)**
+  Catalog: `workspace`. Operational tables live in the `silver` schema.
+  '''
+}
+
+// ----------------------------------------------------------------------------
+// RAW  (files in the staging volume - not Delta tables)
+// ----------------------------------------------------------------------------
+Table raw.ibm_csv_file [headercolor: #64748B] {
+  Qubit string
+  "T1 (us)" string
+  "T2 (us)" string
+  "Readout assignment error" string
+  "Init error" string
+  "Prob meas0 prep1" string
+  "Prob meas1 prep0" string
+  "Readout length (ns)" string
+  "ID error" string
+  "Single-qubit gate length (ns)" string
+  "RX error" string
+  "Z-axis rotation (rz) error" string
+  "√x (sx) error" string
+  "Pauli-X error" string
+  "XSLOW error" string
+  "CZ error" string
+  "Gate length (ns)" string
+  "RZZ error" string
+  "MEASURE error" string
+  "MEASURE_2 error" string
+  Operational string
+  Backend_ID string
+  Calibration_Timestamp string
+
+  Note: '''
+  IBM calibration CSV in `/Volumes/workspace/landing/staging/ibm/new/`.
+  23 columns, all StringType, forced with an explicit StructType (no inferSchema).
+  New columns are tolerated by Raw->Bronze (kept in raw_payload).
+  '''
+}
+
+Table raw.noaa_jsonl_file [headercolor: #64748B] {
+  observation_timestamp string
+  source string
+  raw_payload string
+  source_file string
+
+  Note: '''
+  NOAA JSON Lines batch in `/Volumes/workspace/landing/staging/noaa/new/`.
+  4 fields, all StringType (NOAA_INPUT_SCHEMA).
+  '''
+}
+
+// ----------------------------------------------------------------------------
+// BRONZE  (raw values kept as STRING + lineage)
+// ----------------------------------------------------------------------------
+Table bronze.ibm_calibration_raw [headercolor: #B45309] {
+  backend_id string [note: 'From Backend_ID']
+  collection_timestamp timestamp [note: 'Fetch time, parsed from the file name']
+  raw_calibration_timestamp string [note: 'Original calibration time, uncast']
+  raw_payload string [note: 'Full source row as JSON (all 23 columns + any new ones)']
+  source string [note: 'ibm_quantum_platform']
+  source_file string [note: 'Lineage: originating CSV']
+  load_timestamp timestamp [note: 'current_timestamp() at load']
+
+  Note: '''
+  **Logical PK:** (source_file, backend_id, raw_calibration_timestamp, Qubit),
+  where Qubit is read from raw_payload ($.Qubit).
+  Enforced by: a file whose name is already in Bronze is skipped (append-only).
+  '''
+}
+
+Table bronze.noaa_space_weather_raw [headercolor: #B45309] {
+  observation_timestamp string [note: 'Original observation time, uncast']
+  source string [note: 'noaa_swpc_kp | noaa_swpc_f107']
+  raw_payload string [note: 'Source record + parsed fields as JSON']
+  source_file string [note: 'Lineage: originating JSONL']
+  load_timestamp timestamp [note: 'Set on insert and on change']
+
+  indexes {
+    (source, observation_timestamp) [pk, note: 'Logical PK, enforced by MERGE']
+  }
+
+  Note: 'MERGE updates a row only when raw_payload changed.'
+}
+
+// ----------------------------------------------------------------------------
+// SILVER  (typed, validated, de-duplicated)
+// ----------------------------------------------------------------------------
+Table silver.ibm_qubit_calibration [headercolor: #475569] {
+  record_key string [pk, note: 'SHA-256 of (backend_id, calibration_timestamp, qubit_id)']
+  backend_id string
+  calibration_timestamp timestamp [note: 'UTC']
+  qubit_id int
+  t1_us double [note: 'T1 in microseconds']
+  t2_us double [note: 'T2 in microseconds']
+  readout_error double [note: 'Readout assignment error, 0..1']
+  init_error double [note: 'Nullable, 0..1']
+  operational boolean
+  source_payload_hash string [note: 'SHA-256 of raw_payload; MERGE updates only if it changed']
+  source_file string [note: 'Lineage']
+  load_timestamp timestamp [note: 'When processed into Silver']
+
+  Note: 'MERGE ON record_key; invalid rows go to quarantined_records.'
+}
+
+Table silver.noaa_environment [headercolor: #475569] {
+  record_key string [pk, note: 'SHA-256 of (source, observation_type, observation_timestamp)']
+  source string
+  observation_type string [note: 'planetary_kp | f10_7_flux']
+  observation_timestamp timestamp [note: 'UTC']
+  kp_index double [note: 'Kp rows only, 0..9']
+  solar_flux double [note: 'F10.7 rows only, > 0']
+  source_unit string [note: 'index | sfu']
+  source_payload_hash string
+  source_file string [note: 'Lineage']
+  load_timestamp timestamp
+
+  Note: 'MERGE ON record_key; invalid rows go to quarantined_records.'
+}
+
+// ----------------------------------------------------------------------------
+// OPERATIONAL  (cover both layers, stored in the silver schema)
+// ----------------------------------------------------------------------------
+Table silver.pipeline_execution_logs [headercolor: #0F766E] {
+  run_id string [note: 'One id per notebook run']
+  stage string [note: 'Raw-to-Bronze | Bronze-to-Silver']
+  dataset string [note: 'ibm | noaa']
+  mode string [note: 'full | incremental | backfill']
+  parameters string [note: 'File or date range processed']
+  started_at timestamp
+  finished_at timestamp
+  status string [note: 'SUCCESS | FAILURE']
+  input_rows bigint
+  rows_inserted bigint
+  rows_updated bigint
+  rows_quarantined bigint
+  error_message string [note: 'Failure reason, or a SCHEMA_DRIFT warning on a successful run']
+  load_timestamp timestamp
+
+  Note: 'Append-only audit log: one row per file (Raw->Bronze) or per dataset (Bronze->Silver). No PK.'
+}
+
+Table silver.quarantined_records [headercolor: #0F766E] {
+  record_key string [pk, note: 'SHA-256 of (dataset, source_file, raw_payload, error_reason)']
+  dataset string [note: 'ibm | noaa']
+  source_file string
+  raw_payload string
+  error_reason string [note: 'e.g. SCHEMA_DRIFT_NEW_COLUMN, INVALID_T1_US, INVALID_KP']
+  load_timestamp timestamp
+
+  Note: 'Rejected records are kept here, never silently dropped.'
+}
+
+// ----------------------------------------------------------------------------
+// LINEAGE  (arrow points from the derived column to its origin)
+// ----------------------------------------------------------------------------
+Ref raw_to_bronze_ibm_backend: bronze.ibm_calibration_raw.backend_id > raw.ibm_csv_file.Backend_ID
+Ref raw_to_bronze_ibm_time: bronze.ibm_calibration_raw.raw_calibration_timestamp > raw.ibm_csv_file.Calibration_Timestamp
+Ref raw_to_bronze_noaa_file: bronze.noaa_space_weather_raw.source_file > raw.noaa_jsonl_file.source_file
+
+Ref bronze_to_silver_ibm: silver.ibm_qubit_calibration.source_file > bronze.ibm_calibration_raw.source_file
+Ref bronze_to_silver_noaa: silver.noaa_environment.source_file > bronze.noaa_space_weather_raw.source_file
+
+Ref quarantine_from_ibm: silver.quarantined_records.source_file > bronze.ibm_calibration_raw.source_file
+Ref quarantine_from_noaa: silver.quarantined_records.source_file > bronze.noaa_space_weather_raw.source_file
+
+// ----------------------------------------------------------------------------
+// LAYER GROUPS
+// ----------------------------------------------------------------------------
+TableGroup "1 - Raw (staging volume files)" {
+  raw.ibm_csv_file
+  raw.noaa_jsonl_file
+}
+
+TableGroup "2 - Bronze (raw values + lineage)" {
+  bronze.ibm_calibration_raw
+  bronze.noaa_space_weather_raw
+}
+
+TableGroup "3 - Silver (typed, validated)" {
+  silver.ibm_qubit_calibration
+  silver.noaa_environment
+}
+
+TableGroup "Operational (audit + quarantine)" {
+  silver.pipeline_execution_logs
+  silver.quarantined_records
+}
