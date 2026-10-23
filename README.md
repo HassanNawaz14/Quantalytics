@@ -13,6 +13,8 @@ NOAA SWPC ───────┘      new/ → processed/ | rejected/ └─�
 
 Gold analytics and the dashboard are **not** part of Phase 2.
 
+Phase 2 is frozen. The as-built Phase 2 documentation is [`Phase2/README.md`](Phase2/README.md). All deferred fixes and required Phase 3 changes are tracked in [`Phase3/Phase2_Leftovers.md`](Phase3/Phase2_Leftovers.md).
+
 ## 1. Repository layout
 
 | Path | Purpose |
@@ -24,6 +26,8 @@ Gold analytics and the dashboard are **not** part of Phase 2.
 | `spark/silver/1. Silver Pipeline.ipynb` | **Bronze → Silver**, both datasets: validation, `MERGE`, quarantine, logging. |
 | `spark/silver/tests/` | Schema-drift, quarantine and Silver QA notebooks. |
 | `data/` | Small samples (`data/sample/`) and generation scripts. |
+| `Phase2/README.md` | Final as-built Phase 2 documentation: architecture, data model, evidence, and limitations. |
+| `Phase3/Phase2_Leftovers.md` | Deferred Phase 2 defects and the Phase 3 remediation backlog. |
 
 ## Workflow:
 ```mermaid
@@ -248,23 +252,30 @@ FROM workspace.bronze.ibm_calibration_raw
 GROUP BY ALL HAVING COUNT(*) > 1;
 ```
 
-## 6. QA evidence (Bronze → Silver, 10 October 2026)
+## 6. QA evidence (Bronze → Silver, saved outputs)
+
+The counts below are recorded from the saved notebook outputs. The IBM and NOAA totals are **current Silver totals after full and incremental runs**, not the source full-load batch sizes.
 
 | Test | Observed result |
 | --- | --- |
-| IBM initial full processing | **456,612** Silver records; 456,612 inserted. |
-| NOAA initial full processing | **2,194** Silver records; 2,194 inserted. |
+| IBM Silver total | **456,612** records: 422,916 full-load + 33,228 + 468 incremental rows. |
+| NOAA Silver total | **2,194** records: 1,822 full-load + 372 live/incremental rows. |
 | Duplicate logical-key check | **0** duplicate keys in either Silver table. |
-| Repeated full processing | **0 inserts, 0 updates** for unchanged IBM and NOAA records. |
+| Repeated IBM full processing | **0 inserts, 0 updates** for unchanged records. NOAA repeat behavior is not present in the saved outputs. |
 | IBM backfill, 25–26 September 2026 | **4,680** rows selected; **0 inserts, 0 updates** on unchanged data. |
 | IBM file-based incremental reprocessing | **33,228** rows from one file; **0 inserts, 0 updates**. |
-| Schema-drift test | Invalid numeric type and unexpected field correctly classified. |
+| Schema-drift notebook | Manual demonstration of an invalid numeric type and unexpected field; no automated assertion. |
 | Automatic quarantine QA | **2** invalid records quarantined; **0** reached Silver. |
 
-Raw → Bronze evidence (drift file loaded with warning, broken file rejected, re-run with 0 inserts) is in the saved outputs of the two Bronze notebooks and in `pipeline_execution_logs` where `stage = 'Raw-to-Bronze'`.
+Raw → Bronze behavior is implemented in the Bronze notebooks and recorded in `pipeline_execution_logs` where `stage = 'Raw-to-Bronze'`. The committed saved outputs do not by themselves prove the drift, rejection, and re-run scenarios.
 
 ## 7. Known limits
 
 * Delta tables do not enforce primary keys; uniqueness is enforced by the pipeline logic described above.
 * Historical Bronze `load_timestamp` values come from a one-time migration, not the original ingestion times.
-* Phase 3 (Gold and dashboard) will build reliability trends and QPU-versus-space-weather analyses on top of Silver.
+* NOAA Silver combines 3-hourly historical Kp with minute-level live Kp using the current source definitions; coverage and semantics are not yet normalized.
+* IBM full history is bounded by the 200 MB target and five-snapshot-per-day sampling; it is not a complete one-year backfill.
+* `Operational` is written as a constant `Yes` by the current IBM collector and is not a health signal.
+* Silver has no gate table and no per-row collection timestamp; gate metrics remain in Bronze.
+* Only the collectors are scheduled; Bronze and Silver are manual notebook runs in Phase 2.
+* Phase 3 (Gold and dashboard) will build reliability trends and QPU-versus-space-weather analyses on top of Silver, and will address the deferred items in [`Phase3/Phase2_Leftovers.md`](Phase3/Phase2_Leftovers.md).

@@ -1,874 +1,408 @@
-# Quantalytics
+# Phase 2 Final Documentation
 
-**Phase 2 Engineering Documentation — Bronze + Silver Foundation**
+**Status:** Frozen / as-built
+**Consolidated:** 2026-10-23
+**Implementation scope:** IBM Quantum calibration data and NOAA SWPC space-weather data, from collection through Silver
+**Implementation changes after freeze:** None. Phase 3 work is tracked separately.
 
-Quantalytics is a research-oriented data engineering project for longitudinal analysis of calibration reliability on real IBM quantum processors. The central research question is:
+This is the final Phase 2 documentation. It describes what is actually implemented in the collectors, workflows, notebooks, and saved outputs. It replaces the earlier generated Phase 2 documentation package, which described a different and partly aspirational implementation.
 
-> Do real quantum processors exhibit predictable temporal and spatial reliability-drift patterns that are not visible from individual calibration snapshots?
+All identified defects, limitations, and required changes are recorded in:
 
-Phase 2 does **not** attempt to prove that drift exists, build the final predictive model, or publish Gold-layer research results. Phase 2 builds the reproducible data foundation on which those later questions can be answered.
+- [`Phase3/Phase2_Leftovers.md`](../Phase3/Phase2_Leftovers.md)
 
-This README is the top-level implementation contract. Detailed contracts live in:
+No Phase 2 code or notebook behavior is changed by this document.
 
-- `docs/architecture/phase2-architecture.md`
-- `docs/data_contracts/bronze-silver-data-contract.md`
-- `docs/operations/pipeline-runbook.md`
-- `docs/testing/phase2-test-plan.md`
-- `docs/research/phase2-to-gold-contract.md`
-- `docs/decisions/architecture-decision-records.md`
-- `docs/phase2/documentation-qa-report.md`
+## 1. Purpose and research context
 
-## 1. Status labels used in this documentation
+Quantalytics is a data-engineering project for longitudinal analysis of IBM quantum-processor calibration and reliability data, compared with NOAA space-weather observations.
 
-| Label | Meaning |
-|---|---|
-| `REQUIRED` | Must be implemented for Phase 2 compliance. |
-| `RECOMMENDED` | Strong implementation recommendation; may be changed only with documented rationale. |
-| `ASSUMPTION` | Used because the supplied project material does not establish the fact completely. |
-| `OPEN DECISION` | Cannot be safely finalized without new evidence or instructor/project-owner input. |
-| `VALIDATION REQUIRED` | Must be confirmed against the actual frozen sample/source before coding is treated as final. |
-| `IMPLEMENTATION NOTE` | Precision for coding agents; not a new research requirement. |
+The research direction is to determine whether real quantum processors show temporal or spatial reliability patterns that are not visible from individual calibration snapshots, and whether those patterns correlate with space-weather activity.
 
-## 2. Phase 2 objective
+Phase 2 provides the reproducible data foundation for that work. It does not implement the final health score, predictive model, causal analysis, Gold tables, or dashboard.
 
-`REQUIRED`
+## 2. Phase 2 scope
 
-Build a robust, reproducible, parameterized, auditable Apache Spark pipeline that:
+### Implemented
 
-1. obtains approved IBM Quantum and NOAA/SWPC raw artifacts through an **external collector/staging boundary**;
-2. preserves those artifacts immutably;
-3. loads them into contract-enforced Bronze Delta tables using explicit schemas;
-4. normalizes them into contract-enforced Silver Delta tables;
-5. uses stable business keys and Delta `MERGE` for idempotency;
-6. supports full load, incremental load, backfill, replay, and validation-only execution;
-7. detects schema drift;
-8. quarantines non-conforming records without silently discarding them;
-9. writes operational audit metrics;
-10. preserves the temporal, qubit, gate, backend, and environmental information required by future Gold/research work.
+- External IBM and NOAA collectors.
+- Scheduled and manually triggered GitHub Actions collection.
+- Raw CSV/JSONL staging in a Databricks Unity Catalog volume.
+- IBM Bronze and NOAA Bronze Delta tables.
+- IBM and NOAA Silver tables.
+- Validation, quarantine, schema-drift handling, and execution logging.
+- Full, incremental, and backfill paths at the notebook/widget level.
+- Manual QA notebooks for schema drift, quarantine, and Silver verification.
 
-## 3. Scope
+### Not implemented
 
-### 3.1 In scope
+- Gold tables.
+- Dashboard or BI layer.
+- Predictive or causal modeling.
+- Automated end-to-end orchestration across collection, Bronze, and Silver.
+- Production-grade scheduling, service-level objectives, or high-availability design.
 
-- external IBM and NOAA/SWPC collectors;
-- immutable staged raw artifacts;
-- explicit input schemas;
-- IBM Bronze;
-- NOAA Bronze;
-- `silver_backend`;
-- `silver_qubit_calibration`;
-- `silver_gate_calibration`;
-- `silver_environment`;
-- stable key generation;
-- strict casting;
-- timestamp normalization to UTC;
-- Delta merge semantics;
-- watermark + overlap logic;
-- quarantine;
-- schema-drift logs;
-- execution logs;
-- reconciliation;
-- idempotency tests;
-- parameterized backfill/replay;
-- development and academic-demonstration evidence.
+Only the two collectors are scheduled in the repository. Bronze, Silver, and QA are manual Databricks notebook runs. This is the frozen Phase 2 operating model; automation is a Phase 3 item.
 
-### 3.2 Out of scope for Phase 2
-
-- final QPU health score;
-- final qubit ranking model;
-- final drift-event thresholds;
-- final calibration-staleness threshold;
-- final prediction model;
-- final causal interpretation of space weather;
-- production-scale orchestration;
-- production SLA/high-availability design;
-- final Gold tables or dashboard implementation.
-
-Those belong to Phase 3+ unless the academic requirements are changed.
-
-## 4. Current platform verification
-
-**Verified 2026-09-30 against current official vendor documentation.**
-
-| Topic | Phase 2 position |
-|---|---|
-| Databricks | Use **Databricks Free Edition** for the no-cost student implementation unless the instructor mandates Azure. Legacy Community Edition was retired in 2025. |
-| Free Edition compute | Free Edition provides serverless compute only and is quota-limited. |
-| Network access | Free Edition outbound internet can be restricted to trusted domains; verified accounts can receive broader outbound access. The pipeline therefore must not depend on Spark notebooks calling IBM/NOAA directly. |
-| IBM historical properties | IBM Quantum Compute REST exposes `GET /v1/backends/{id}/properties` with `updated_before` and `calibration_id`. |
-| Qiskit convenience access | `IBMBackend.properties(refresh=False, datetime=None)` documents historical lookup semantics, but current IBM documentation states that specifying `datetime` can raise `NotImplementedError` in IBM Quantum Compute. |
-| IBM property contents | Backend properties include qubit information such as T1/T2/readout error and gate information such as gate error and length. |
-| Delta upsert | Delta Lake supports `MERGE` with explicit match conditions; duplicate source matches must be removed before merge to avoid ambiguous updates. |
-| NOAA/SWPC | Current observational product files include `noaa-planetary-k-index.json` and `10cm-flux-30-day.json`. Their source observations are not pre-aligned to IBM calibration events. |
-
-**Vendor-documentation basis:** Databricks Free Edition signup/limitations; Databricks serverless limitations; IBM Quantum Compute REST Backends API; IBM `IBMBackend` and `BackendProperties` API references; Delta Lake merge documentation; NOAA/SWPC products index and observational JSON products.
-
-Time-sensitive vendor facts must be rechecked if implementation begins materially later than this documentation date.
-
-## 5. Logical architecture
+## 3. As-built architecture
 
 ```mermaid
-flowchart TD
-    IBM[IBM Quantum] --> C[External Collectors]
-    NOAA[NOAA / SWPC] --> C
-    C --> RAW[Immutable Raw Input / Staging]
-    RAW --> V[Explicit-schema validation]
-    V --> B[Bronze Delta]
-    B --> S[Silver Delta]
-    B --> Q[Quarantine / Drift Logs]
-    S --> A[Audit + Reconciliation]
-    S --> G[Future Gold / Research]
-    S --> D[Future Dashboard / BI]
+flowchart LR
+    IBM[IBM Quantum API] --> IBMCOL[ingestion/ibm_collect.py]
+    NOAA[NOAA SWPC API] --> NOAACOL[ingestion/noaa_collect.py]
+
+    IBMCOL --> IBMVOL[(UC volume<br/>staging/ibm)]
+    NOAACOL --> NOAAVOL[(UC volume<br/>staging/noaa)]
+
+    IBMVOL --> IBMB[Bronze notebook<br/>ibm_bronze_load.ipynb]
+    NOAAVOL --> NOAAB[Bronze notebook<br/>noaa_bronze_load.ipynb]
+
+    IBMB --> BRONZE[(Bronze Delta tables)]
+    NOAAB --> BRONZE
+
+    BRONZE --> SILVER[Silver notebook<br/>1. Silver Pipeline.ipynb]
+    SILVER --> SILVERT[(Silver Delta tables)]
+    SILVER --> QUAR[(quarantined_records)]
+    SILVER --> LOG[(pipeline_execution_logs)]
+
+    SILVERT -.-> GOLD[Gold / dashboard<br/>Phase 3]
 ```
 
-### Why collection is separated from Spark
-
-`REQUIRED`
-
-The external collector owns authentication, external HTTP calls, retries, rate-limit handling, and raw payload capture. Spark owns deterministic validation, Bronze persistence, normalization, Silver persistence, data quality, and audit.
-
-This prevents Databricks networking limitations from becoming a correctness dependency and allows the same frozen raw inputs to be replayed without repeatedly calling external APIs.
-
-## 6. Data sources
-
-### 6.1 IBM Quantum
-
-**Purpose:** obtain calibration/property history for configured real QPUs.
-
-**Phase 1 targeted backends:**
-
-```text
-ibm_kingston
-ibm_fez
-ibm_marrakesh
-```
-
-`REQUIRED`: these names are **configuration values**, not architecture constants. Backend availability and entitlement must be checked at collection time.
-
-**Historical baseline:** REST backend-properties retrieval using `updated_before`; `calibration_id` is used when a known calibration must be fetched exactly.
-
-**Current snapshot convenience:** Qiskit may be used, but Phase 2 historical extraction must not depend exclusively on `backend.properties(datetime=...)`.
-
-**Raw preservation:** save the exact returned JSON as a string or immutable file, calculate SHA-256, and store retrieval metadata separately.
-
-### 6.2 NOAA / SWPC
-
-Phase 1 requires at least:
-
-- planetary Kp index;
-- 10.7 cm solar radio flux.
-
-Current observational products verified on 2026-09-30 expose:
-
-- Kp observations with `time_tag`, `Kp`, `a_running`, `station_count`;
-- 10.7 cm flux observations with `time_tag`, `flux`.
-
-`REQUIRED`: preserve the source cadence. Do **not** join or aggregate NOAA observations to IBM calibration timestamps in Silver.
-
-`IMPLEMENTATION NOTE`: `silver_environment` uses one row per observation type/time. This avoids fabricating temporal alignment between two products with different cadences.
-
-## 7. Repository structure
-
-```text
-Quantalytics/
-├── ingestion/
-│   ├── ibm/
-│   │   ├── collector.py
-│   │   └── history.py
-│   ├── noaa/
-│   │   ├── collector.py
-│   │   └── products.py
-│   ├── common/
-│   │   ├── http.py
-│   │   ├── hashing.py
-│   │   └── artifacts.py
-│   └── README.md
-├── spark/
-│   ├── common/
-│   │   ├── config.py
-│   │   ├── keys.py
-│   │   ├── merge.py
-│   │   ├── audit.py
-│   │   ├── quarantine.py
-│   │   └── watermark.py
-│   ├── bronze/
-│   │   ├── ibm_bronze.py
-│   │   └── noaa_bronze.py
-│   ├── silver/
-│   │   ├── backend.py
-│   │   ├── qubit.py
-│   │   ├── gate.py
-│   │   └── environment.py
-│   └── validation/
-│       ├── schema_drift.py
-│       ├── data_quality.py
-│       └── reconciliation.py
-├── notebooks/
-│   ├── phase2/
-│   │   ├── run_pipeline.py
-│   │   └── demo_phase2.py
-│   └── experiments/
-├── schemas/
-│   ├── bronze/
-│   │   ├── ibm.py
-│   │   └── noaa.py
-│   └── silver/
-│       ├── backend.py
-│       ├── qubit.py
-│       ├── gate.py
-│       └── environment.py
-├── config/
-│   ├── defaults/
-│   │   └── phase2.yaml
-│   └── examples/
-│       └── phase2.example.yaml
-├── sample_data/
-│   ├── full_load/
-│   └── incremental_load/
-├── tests/
-│   ├── unit/
-│   ├── integration/
-│   ├── data_quality/
-│   ├── idempotency/
-│   └── fixtures/
-├── research/
-├── dashboard/
-├── docs/
-├── .github/
-│   └── workflows/
-├── requirements.txt
-├── .gitignore
-├── README.md
-└── LICENSE
-```
-
-### Directory responsibilities
-
-| Path | Responsibility |
-|---|---|
-| `ingestion/` | External source access and immutable artifact creation only. No Silver business logic. |
-| `spark/common/` | Shared deterministic Spark behavior: configuration, keys, merge, logging, quarantine, watermark. |
-| `spark/bronze/` | Explicit-schema raw artifact ingestion and immutable Bronze persistence. |
-| `spark/silver/` | Source-to-analytical normalization with strict casts. |
-| `spark/validation/` | Structural, value, uniqueness, referential, temporal, schema-drift, and reconciliation checks. |
-| `schemas/` | Central executable `StructType` contracts. |
-| `notebooks/phase2/` | Parameterized entry points and academic demonstrations. Not the home of core business logic. |
-| `config/` | Non-secret environment and pipeline configuration. |
-| `sample_data/` | Frozen, reproducible, non-secret full/incremental fixtures. |
-| `tests/` | Unit, integration, DQ, idempotency, replay, failure and reconciliation tests. |
-| `research/` | Phase 3+ research code; no final methodology is implemented in Phase 2. |
-| `dashboard/` | Phase 3+ BI/dashboard work. |
-| `docs/` | Architecture, contracts, runbook, tests, research contract, decisions, QA. |
-
-## 7A. Prerequisites and environment setup
-
-### 8.1 Prerequisites
-
-`REQUIRED`
-
-Before implementation/demonstration, provide:
-
-- a GitHub repository for `HassanNawaz14/Quantalytics` or the instructor-approved repository;
-- a Databricks Free Edition workspace, unless Azure is mandated;
-- permission to create/use the configured catalog/schema/table or equivalent managed storage objects available in that workspace;
-- a local/external Python environment for IBM/NOAA collection;
-- IBM Quantum credentials/entitlement supplied through secrets, never committed;
-- outbound internet access for the **external collector** runtime;
-- frozen sample files for offline Spark development and academic demonstration;
-- Git installed for local repository work;
-- Python and package versions pinned in `requirements.txt` only after compatibility is verified with the chosen collector and Databricks runtime.
-
-`VALIDATION REQUIRED`: do not invent a Python/Spark/Delta version in documentation. Pin exact versions after the selected Databricks environment and collector dependencies are initialized and verified.
-
-### 8.2 Environment initialization
-
-1. Clone or otherwise connect the GitHub repository to the development environment.
-2. Create the configured Databricks catalog/schema or instructor-approved equivalent.
-3. Create/identify controlled locations for:
-   - staged immutable raw input;
-   - Bronze;
-   - Silver;
-   - quarantine;
-   - audit/drift/watermark tables.
-4. Copy `config/examples/phase2.example.yaml` to an environment-specific non-secret config.
-5. Inject source credentials through environment variables/secret facilities.
-6. Install/pin only the dependencies actually required by the verified environment.
-7. Run unit/schema tests before writing analytical tables.
-8. Run `validation_only` against frozen sample files.
-9. Only then execute the full-load golden path.
-
-No environment setup step may require committing secrets.
-
-## 8. Configuration contract
-
-`REQUIRED`: business logic must not hard-code credentials, dates, backends, table names, paths, or research thresholds.
-
-Recommended configuration file:
-
-```yaml
-environment: dev
-
-databricks:
-  catalog: "<catalog>"
-  schema: "<schema>"
-  bronze_location: "<volume-or-managed-location>"
-  silver_location: "<volume-or-managed-location>"
-  quarantine_location: "<volume-or-managed-location>"
-  audit_location: "<volume-or-managed-location>"
-
-input:
-  root: "<staged-input-root>"
-
-pipeline:
-  run_mode: "incremental"
-  source_system: "IBM"
-  backend_list:
-    - "ibm_kingston"
-    - "ibm_fez"
-    - "ibm_marrakesh"
-  start_timestamp: null
-  end_timestamp: null
-  batch_id: null
-  watermark_overlap_seconds: 86400
-  allow_source_revision_update: false
-  pipeline_version: "phase2-v1"
-  schema_version: "phase2-v1"
-
-sources:
-  ibm:
-    base_endpoint: "<configured externally>"
-  noaa:
-    kp_product: "<configured externally>"
-    f107_product: "<configured externally>"
-
-quality:
-  allowed_clock_skew_seconds: 300
-  fail_on_batch_contract_violation: true
-
-logging:
-  execution_log_table: "pipeline_execution_logs"
-  schema_drift_log_table: "pipeline_schema_drift_logs"
-  quarantine_table: "quarantine_records"
-  watermark_table: "pipeline_watermarks"
-```
-
-`IMPLEMENTATION NOTE`: `86400` and `300` above are **examples**, not project constants. Production/default values must be confirmed and versioned in `config/defaults/phase2.yaml`.
-
-Secrets are supplied through environment variables, repository secrets, or platform secret facilities and are never written into this YAML.
-
-## 9. Collector artifact contract
-
-Collectors emit immutable JSONL/envelope artifacts. One artifact record contains:
-
-```json
-{
-  "source_system": "IBM",
-  "source_artifact_id": "example-only",
-  "source_uri": "logical-source-reference",
-  "backend_id": "ibm_fez",
-  "collection_timestamp": "2026-09-30T12:34:56Z",
-  "raw_calibration_timestamp": "2026-09-30T00:00:00Z",
-  "calibration_id": null,
-  "observation_type": null,
-  "raw_payload": "{...exact source JSON...}",
-  "source_payload_hash": "<sha256>",
-  "batch_id": "<uuid>",
-  "collector_version": "phase2-v1"
-}
-```
-
-This is an **example shape**, not an actual IBM response.
-
-NOAA artifacts use the same envelope but populate `observation_type` and do not require `backend_id` or `raw_calibration_timestamp`.
-
-## 10. Pipeline entry points
-
-### 10.1 External collector CLI
-
-The coding implementation must provide an interface equivalent to:
-
-```bash
-python -m ingestion.ibm.collector \
-  --config config/defaults/phase2.yaml \
-  --mode backfill \
-  --backend ibm_fez \
-  --start 2026-01-01T00:00:00Z \
-  --end 2026-02-01T00:00:00Z \
-  --batch-id <uuid>
-```
-
-```bash
-python -m ingestion.noaa.collector \
-  --config config/defaults/phase2.yaml \
-  --mode incremental \
-  --product all \
-  --batch-id <uuid>
-```
-
-These examples define the intended parameter contract; exact shell packaging may differ if the repository uses an equivalent argument parser.
-
-### 10.2 Spark/Databricks entry point
-
-`notebooks/phase2/run_pipeline.py` must accept these parameters as Databricks widgets or equivalent runtime arguments:
-
-| Parameter | Required | Meaning |
-|---|---:|---|
-| `run_mode` | yes | `full`, `incremental`, `backfill`, `replay`, `validation_only` |
-| `source_system` | yes | `IBM`, `NOAA`, or `ALL` |
-| `input_path` | yes | Staged immutable input file/folder |
-| `batch_id` | yes except validation-only | Source collection batch identity |
-| `run_id` | generated | Unique Spark execution identity |
-| `backend_list` | conditional | Comma-separated/configured IBM backends |
-| `start_timestamp` | backfill | Inclusive historical lower bound |
-| `end_timestamp` | backfill | Exclusive/defined upper bound; document exact collector semantics |
-| `watermark_override` | optional | Explicit operator override; logged |
-| `allow_source_revision_update` | optional | Defaults false; controlled reconciliation only |
-| `pipeline_version` | yes | Code/contract release identifier |
-
-## 11. Execution modes
-
-| Mode | Purpose | Writes analytical tables? | Watermark behavior | Idempotency requirement |
-|---|---|---:|---|---|
-| `full` | Establish baseline from supplied/frozen full-load artifacts. | yes | Initialize after successful commit. | Re-running same artifacts changes no logical rows. |
-| `incremental` | Process candidate observations newer than or overlapping prior watermark. | yes | Advances only after successful commit. | Same artifact can be replayed with zero duplication. |
-| `backfill` | Process arbitrary historical interval/files. | yes | Does not move normal incremental watermark by default. | Same range/files are safe to rerun. |
-| `replay` | Reprocess an already captured immutable batch. | yes | No advance unless explicitly configured for recovery. | Deterministic result must match prior accepted result. |
-| `validation_only` | Validate schema/DQ without changing Bronze/Silver. | no | Never changes watermark. | Side-effect free except validation/audit records. |
-
-Full mode is included because the implementation prompt explicitly requires it even though the master specification primarily emphasizes incremental/backfill/replay/validation.
-
-## 12. Bronze model summary
-
-### `bronze_ibm_backend_properties`
-
-Grain: one immutable IBM source payload version for one backend/calibration snapshot.
-
-Stable identities:
-
-- `snapshot_business_key = SHA256(backend_id | calibration_timestamp_utc)`
-- `record_key = SHA256(snapshot_business_key | source_payload_hash)`
-
-The merge key is `record_key`, not `load_timestamp`.
-
-### `bronze_noaa_observation`
-
-Grain: one immutable NOAA observation payload version for one source product/time/type.
-
-Stable identities:
-
-- `snapshot_business_key = SHA256(source | observation_type | observation_timestamp_utc)`
-- `record_key = SHA256(snapshot_business_key | source_payload_hash)`
-
-Bronze may contain multiple payload versions for the same snapshot business key. That is intentional preservation; a same-key/different-hash event is logged as a source revision/drift event rather than silently overwriting raw history.
-
-## 13. Silver model summary
-
-| Table | Grain | Business key |
+### 3.1 Sources and collectors
+
+**IBM Quantum**
+
+- Collector: `ingestion/ibm_collect.py`.
+- Uses Qiskit IBM Runtime authentication.
+- Captures backend calibration rows containing qubit-level T1, T2, readout error, initialization error, operational status, and other source fields.
+- Samples up to five calibration snapshots per backend per day (`SNAPSHOTS_PER_DAY = 5`).
+- Supports full and incremental modes.
+- Full collection uses a 200 MB target and a 365-day lookback.
+- Incremental collection uses a saved watermark.
+- Writes one CSV per backend into the IBM staging area and updates the watermark after upload.
+- The production collector currently writes `Operational = "Yes"` for every row.
+
+**NOAA SWPC**
+
+- Collector: `ingestion/noaa_collect.py`.
+- Full collection uses NOAA archive products for historical Kp and F10.7.
+- Incremental collection uses near-real-time NOAA products.
+- Writes dataset-specific JSON Lines files into the NOAA staging area.
+- Uses a saved watermark and strict `<=` filtering for incremental records.
+- Live Kp comes from the minute-level planetary K-index product; historical Kp comes from the 3-hourly archive product.
+- F10.7 historical records are date-only; live F10.7 records are timestamped at 20:00.
+
+### 3.2 GitHub Actions
+
+| Workflow | Schedule | Responsibility |
 |---|---|---|
-| `silver_backend` | one backend at one calibration timestamp | `backend_id + calibration_timestamp` |
-| `silver_qubit_calibration` | one physical qubit at one backend calibration timestamp | `backend_id + calibration_timestamp + qubit_id` |
-| `silver_gate_calibration` | one 2-qubit instruction on an ordered qubit pair at one calibration timestamp | `backend_id + calibration_timestamp + gate_type + source_qubit + target_qubit` |
-| `silver_environment` | one environmental observation type at one source observation timestamp | `source + observation_type + observation_timestamp` |
+| `.github/workflows/ibm-collect.yml` | Monday 03:00 UTC, plus manual | Run IBM full or incremental collection, upload CSV files, update IBM state |
+| `.github/workflows/noaa-collect.yml` | Monday 03:30 UTC, plus manual | Run NOAA full or incremental collection, upload JSONL files, update NOAA state |
 
-Full data dictionaries and explicit schemas are in `docs/data_contracts/bronze-silver-data-contract.md`.
+The workflows do not invoke Bronze, Silver, or Gold. There are no committed Databricks job definitions.
 
-## 14. Timestamp model
+### 3.3 Databricks storage
 
-All persisted analytical timestamps are normalized to UTC.
+All tables live in the `workspace` catalog.
 
-These timestamps are different concepts:
+**Staging volume**
 
-| Timestamp | Meaning |
+- `/Volumes/workspace/landing/staging/ibm/`
+- `/Volumes/workspace/landing/staging/noaa/`
+
+The staging layout uses `new/`, `processed/`, and `rejected/` folders. IBM files with a broken structural contract are moved to `rejected/`; valid files are moved to `processed/` after Bronze processing.
+
+**Bronze tables**
+
+- `workspace.bronze.ibm_calibration_raw`
+- `workspace.bronze.noaa_space_weather_raw`
+
+**Silver tables**
+
+- `workspace.silver.ibm_qubit_calibration`
+- `workspace.silver.noaa_environment`
+- `workspace.silver.pipeline_execution_logs`
+- `workspace.silver.quarantined_records`
+
+### 3.4 Notebooks
+
+| Notebook | Role |
 |---|---|
-| `calibration_timestamp` | Source time at which IBM calibration/property state applies. |
-| `collection_timestamp` | Time the external collector retrieved the payload. |
-| `load_timestamp` | Time Spark materialized the Bronze/Silver record version. |
-| `observation_timestamp` | NOAA observation time. |
-| pipeline `start_time` / `end_time` | Operational run interval. |
-| future analysis reference time | Gold-layer "now" used to compute calibration age. Not stored as mutable Silver state. |
+| `notebooks/00_setup_databricks.ipynb` | Creates the `landing`, `bronze`, `silver`, and `gold` schemas and the staging volume. |
+| `spark/bronze/ibm_bronze_load.ipynb` | Loads IBM CSV files from `new/` into Bronze. |
+| `spark/bronze/noaa_bronze_load.ipynb` | Loads NOAA JSONL files from `new/` into Bronze. |
+| `spark/silver/1. Silver Pipeline.ipynb` | Builds Silver tables, quarantines invalid records, and writes execution logs. |
+| `spark/silver/tests/2. Schema Drift Test.ipynb` | Manual schema-drift demonstration. |
+| `spark/silver/tests/3. Quarantine Test.ipynb` | Isolated quarantine test with assertions. |
+| `spark/silver/tests/4. Silver Testing.ipynb` | Manual Silver SQL and file-count checks. |
 
-`load_timestamp != calibration_timestamp`.
+## 4. Data flow and execution model
 
-Identical reruns do not overwrite a historical scientific record just to change `load_timestamp`.
+### 4.1 IBM flow
 
-## 15. Idempotency model
+1. The collector authenticates to IBM Quantum and obtains calibration rows.
+2. It writes a per-backend CSV whose filename contains the collection timestamp.
+3. The workflow uploads the CSV to `workspace.landing.staging/ibm/<backend>/new/`.
+4. The IBM Bronze notebook reads every new file, preserves the complete row as `raw_payload`, and skips files already represented in Bronze.
+5. Processed files move to `processed/`; structurally invalid files move to `rejected/`.
+6. The Silver notebook reads Bronze, parses the metric columns, validates them, quarantines invalid rows, and merges valid rows into `silver.ibm_qubit_calibration`.
 
-### Bronze
+### 4.2 NOAA flow
 
-- merge by immutable `record_key`;
-- exact same payload/version => no-op;
-- same snapshot business key with a different payload hash => retain the new raw version and log source revision;
-- no duplicate `record_key`.
+1. The collector obtains historical or near-real-time Kp and F10.7 records.
+2. It writes JSONL files containing `observation_timestamp`, `source`, `raw_payload`, and `source_file`.
+3. The workflow uploads the files to `workspace.landing.staging/noaa/`.
+4. The NOAA Bronze notebook validates the JSON structure and merges records into `bronze.noaa_space_weather_raw` using `(source, observation_timestamp)` as the logical key.
+5. The Silver notebook normalizes Kp and F10.7 into `silver.noaa_environment` and quarantines malformed records.
 
-### Silver
+### 4.3 Silver run modes
 
-Before `MERGE`, candidate rows are deduplicated to one row per Silver business key.
+The Silver notebook is manually configured with widgets:
 
-Default behavior:
-
-```text
-same business key + same source_payload_hash
-    => unchanged
-
-same business key + different source_payload_hash
-    => SOURCE_REVISION_REQUIRES_REVIEW
-       Bronze remains preserved
-       candidate is quarantined/reconciled
-       Silver scientific values are not silently overwritten
-
-same business key + different payload hash
-    + allow_source_revision_update=true
-    + validations pass
-    => controlled update + audit rows_updated += 1
-
-business key not present
-    => insert
-```
-
-This policy is deliberately conservative because the supplied project inputs do not establish an automatic source-revision precedence rule.
-
-## 16. Watermark model
-
-The normal incremental watermark is:
-
-```text
-max(source event/calibration timestamp successfully committed)
-```
-
-Discovery uses a configurable overlap:
-
-```text
-candidate_start = previous_watermark - configured_overlap
-```
-
-Candidates are then deduplicated by business identity and payload hash.
-
-Rules:
-
-1. read watermark before discovery;
-2. include overlap;
-3. process/validate/merge;
-4. reconcile;
-5. advance watermark only after the relevant target commit succeeds;
-6. failed runs leave the watermark unchanged;
-7. backfill/replay do not advance the normal watermark unless an explicit recovery procedure says otherwise.
-
-## 17. Schema drift
-
-| Drift | Default outcome |
+| Widget | Purpose |
 |---|---|
-| Additive field | Preserve in raw payload; log drift; Bronze continues; promotion to Silver requires schema-contract version change. |
-| Safely parseable type representation | Normalize explicitly; log normalization; continue. |
-| Incompatible type | Quarantine affected record; continue valid records if batch contract permits. |
-| Missing required/breaking structure | Fail affected stage/batch safely; preserve raw artifact; do not mutate existing Silver; log precise drift event. |
+| `dataset` | `ibm`, `noaa`, or `both` |
+| `mode` | `full`, `incremental`, or `backfill` |
+| `source_file` | Optional single source file for incremental processing |
+| `start_date`, `end_date` | Inclusive backfill window |
 
-Global blind auto-schema evolution is prohibited.
+An incremental run processes the specified source file. A full run processes the available Bronze input for the selected dataset. A backfill run applies the supplied date range. The mode is not inferred automatically.
 
-## 18. Audit and quarantine
+### 4.4 Idempotency
 
-Operational tables:
+- Bronze IBM deduplicates by source filename.
+- Bronze NOAA uses a Delta `MERGE` on `(source, observation_timestamp)`.
+- Silver IBM uses `record_key = SHA-256(backend_id, calibration_timestamp, qubit_id)` and updates a row only when its payload hash changes.
+- Silver NOAA uses `record_key = SHA-256(source, observation_type, observation_timestamp)`.
+- Re-running unchanged Silver input is intended to produce zero inserts and zero updates.
 
-- `pipeline_execution_logs`
-- `pipeline_schema_drift_logs`
-- `quarantine_records`
-- `pipeline_watermarks`
+## 5. Data model
 
-Audit includes run/batch identity, layer, stage, source, execution mode, parameters, start/end, status, row counts, watermark before/after, schema/pipeline version, DQ result and error details.
+### 5.1 Raw input
 
-Quarantine retains the raw problematic record plus enough lineage to fix and replay it.
+**IBM CSV**
 
-## 19. Data quality policy
+- 23 string columns.
+- Includes `Qubit`, `T1 (us)`, `T2 (us)`, `Readout assignment error`, `Init error`, `Operational`, `Backend_ID`, and `Calibration_Timestamp`.
+- Parsed with an explicit schema; `inferSchema` is not used.
 
-Records/batches resolve to one of:
+**NOAA JSONL**
 
-```text
-accepted
-accepted_with_warning
-quarantined
-rejected_batch
-```
+- `observation_timestamp`, `source`, `raw_payload`, `source_file`.
+- All fields are strings at the raw boundary.
 
-A single bad record does not automatically invalidate all valid records unless it violates a batch-level structural contract.
+### 5.2 Bronze grain and keys
 
-No arbitrary scientific "bad qubit" or drift threshold is introduced in Phase 2.
+**`workspace.bronze.ibm_calibration_raw`**
 
-## 20. Testing
+- Grain: one qubit calibration measurement from one source file.
+- Logical key: `(source_file, backend_id, raw_calibration_timestamp, Qubit)`.
+- File-level deduplication prevents the same file from being loaded twice.
+- The same calibration row in two different files remains in Bronze for lineage and is deduplicated in Silver.
+- Preserved fields include the raw JSON payload, source filename, backend id, raw calibration timestamp, collection timestamp, and load timestamp.
 
-Local deterministic tests:
+**`workspace.bronze.noaa_space_weather_raw`**
 
-```bash
-pytest -q tests/unit
-pytest -q tests/data_quality
-pytest -q tests/idempotency
-pytest -q tests/integration
-```
+- Grain: one NOAA observation record from one source file.
+- Logical key: `(source, observation_timestamp)`.
+- `raw_payload` preserves the complete source record plus parsed observations.
 
-Databricks integration demonstrations must additionally execute the golden path in the runbook against frozen sample data.
+### 5.3 Silver grain and keys
 
-Required test categories:
+**`workspace.silver.ibm_qubit_calibration`**
 
-- unit;
-- schema;
-- integration;
-- data quality;
-- idempotency;
-- incremental;
-- backfill;
-- replay;
-- malformed input;
-- schema drift;
-- failure recovery;
-- reconciliation.
+- Grain: one qubit at one backend calibration timestamp.
+- Key: `record_key = SHA-256(backend_id, calibration_timestamp, qubit_id)`.
+- Promoted fields: T1, T2, readout error, initialization error, operational flag, source payload hash, source file, and load timestamp.
+- Gate-level measurements remain inside Bronze `raw_payload`; there is no Silver gate table.
 
-## 21. Development order
+**`workspace.silver.noaa_environment`**
 
-Coding agents must follow this dependency order unless an architecture change is explicitly approved.
+- Grain: one observation type at one observation timestamp.
+- Key: `record_key = SHA-256(source, observation_type, observation_timestamp)`.
+- Observation types: `planetary_kp` and `f10_7_flux`.
+- Kp and F10.7 share the table but occupy different value columns.
 
-| Stage | Prerequisites | Work items / expected files | Dependencies | Tests | Output / acceptance |
-|---|---|---|---|---|---|
-| 1 — Repository & Environment | GitHub + Databricks/external Python access | repository tree, `requirements.txt`, `.gitignore`, config examples, secret contract | none | repository/config smoke tests | repo usable; secrets absent; dependencies documented |
-| 2 — Raw Sample Validation | Stage 1 | freeze IBM/NOAA sample artifacts under `sample_data/`; document hashes/manifests | collector/source access or supplied samples | hash/shape checks | reproducible full/incremental fixtures |
-| 3 — Explicit Schemas | Stage 2 | `schemas/bronze/*.py`, `schemas/silver/*.py`, source nested schemas | frozen sample shapes | schema unit tests | no inference path; samples parse or produce explicit drift |
-| 4 — Bronze | Stage 3 | `spark/bronze/*`, keys/hash utilities, insert-only merge | schemas + staged input | raw→Bronze integration, Bronze idempotency | IBM/NOAA Bronze tables + lineage |
-| 5 — Bronze Validation / Drift / Quarantine | Stage 4 | `spark/validation/schema_drift.py`, `data_quality.py`, `spark/common/quarantine.py` | Bronze + contracts | additive/type/breaking drift; malformed input | controlled accepted/quarantined/rejected outcomes |
-| 6 — Silver | Stage 5 | backend/qubit/gate/environment normalizers and schemas | validated Bronze | Bronze→Silver integration, casts, units, keys | four Silver tables with stable grain |
-| 7 — Audit / Reconciliation | Stage 6 | audit, drift log, reconciliation, watermark tables/modules | Bronze/Silver behavior stable | audit/reconciliation tests | queryable run evidence and accounted rows |
-| 8 — Incremental / Backfill / Replay | Stage 7 | parameterized entrypoint, watermark overlap, all five modes | audit + stable merge logic | incremental/backfill/replay/validation-only tests | modes work without source-code edits |
-| 9 — Testing | Stages 1–8 | complete `tests/` suite and fixtures | all modules | full Phase 2 suite | required tests pass |
-| 10 — Demonstration Evidence | Stage 9 | `demo_phase2.py`/notebook outputs and captured evidence | passing tests | golden path | real evidence for full/incremental/rerun/backfill/drift/quarantine |
-| 11 — Documentation Verification | Stage 10 | update README/contracts/runbook/ADRs from verified implementation | execution evidence | documentation QA | docs match implemented behavior; Phase 2 milestone can be tagged |
+### 5.4 Operational tables
 
+**`workspace.silver.pipeline_execution_logs`**
 
-## 22. Troubleshooting quick reference
+- One row per file processed from Raw to Bronze and one row per dataset processed from Bronze to Silver.
+- Records run id, stage, dataset, mode, parameters, start and finish times, status, input/inserted/updated/quarantined counts, error message, and load time.
 
-| Symptom | Expected action |
+**`workspace.silver.quarantined_records`**
+
+- Stores records that fail validation.
+- Records `record_key`, dataset, source file, raw payload, error reason, and load timestamp.
+- There is no per-run `run_id` in the quarantine table.
+
+## 6. Current data semantics and constraints
+
+### 6.1 IBM calibration
+
+- The Silver table is a qubit-level calibration table, not a gate-level table.
+- `Operational` is not a real observation in the current collector; it is always `"Yes"`.
+- Historical coverage is bounded by the 200 MB full-load target and the five-snapshot-per-day sampling limit.
+- There is no automatic resume or backfill path for an incomplete full load.
+- The production collector does not reject API results whose calibration time is newer than the requested cutoff.
+
+### 6.2 NOAA Kp
+
+- Historical Kp is 3-hourly and uses a decimal estimated planetary K value.
+- Live Kp is minute-level and includes both an integer `kp_index` and a decimal `estimated_kp`.
+- The Silver coalesce order uses `source_record.Kp`, then `source_record.kp_index`, then the historical decimal field.
+- Consequently, live rows can use the integer live value while historical rows use the decimal historical value.
+- The Kp series therefore contains mixed cadence, precision, and source semantics.
+
+### 6.3 NOAA F10.7
+
+- Historical F10.7 records use a date-only observation time, which becomes midnight.
+- Live F10.7 records use a 20:00 timestamp.
+- Because Silver keys on the full timestamp, the same calendar day can appear twice.
+
+### 6.4 Collection time
+
+- Silver has no `collection_timestamp` column.
+- IBM Bronze has a collection timestamp at file/batch level.
+- Reliable per-row collection-lag analysis is therefore not possible from Silver alone.
+
+## 7. Verified evidence
+
+The following figures come from the committed full-load data, incremental CSV files, and saved notebook outputs. They are the evidence for the Phase 2 freeze.
+
+### 7.1 IBM
+
+| Item | Evidence |
+|---|---:|
+| Full-load CSV rows | 422,916 |
+| Full-load backend snapshots | 2,711 total: approximately 925 fez, 887 kingston, 899 marrakesh |
+| Full-load period | 2026-02-24 to 2026-09-25 |
+| Incremental batch 1 | 33,228 rows |
+| Incremental batch 2 | 468 rows |
+| Recorded Silver total | 456,612 rows |
+
+Recorded Silver rows by backend:
+
+| Backend | Rows | Snapshots |
+|---|---:|---:|
+| `ibm_fez` | 155,532 | 997 |
+| `ibm_kingston` | 149,604 | 959 |
+| `ibm_marrakesh` | 151,476 | 971 |
+
+Full-load data quality:
+
+| Field | Missing rows |
+|---|---:|
+| T1 | 1,121 |
+| T2 | 1,741 |
+| XSLOW error | 363,324 |
+
+The full-load CSV has no duplicate logical keys. All full-load `Operational` values are `"Yes"`, and all `Init error` values are empty. Kingston has a sparse early period from approximately 2026-02-24 to 2026-03-06 because the 200 MB target stopped the historical run early.
+
+### 7.2 NOAA
+
+| Item | Evidence |
+|---|---:|
+| Full-load rows | 1,822 |
+| Full-load Kp rows | 1,613 |
+| Full-load F10.7 rows | 209 |
+| Full-load cutoff | approximately 2026-09-25 |
+| Recorded Silver total | 2,194 rows |
+| Difference | 372 rows |
+
+The 372-row difference is consistent with the live Kp and F10.7 records added after the full-load cutoff: 358 live Kp rows plus 14 F10.7 rows. At analysis time, the live Kp feed contained only about six hours of observations, so there is a gap of roughly four weeks between the historical cutoff and the analysis date.
+
+The NOAA Silver total is not a complete, regular time series. It combines the archive batch with a short live snapshot.
+
+### 7.3 QA saved-output evidence
+
+| Check | Saved-output result |
 |---|---|
-| External HTTP fails in Databricks | Do not redesign around notebook downloads. Run the external collector and stage the artifact. |
-| Missing required source field | Preserve raw input; log schema drift; quarantine/reject according to contract; do not auto-add a Silver column. |
-| Numeric cast returns null | Treat as measurable cast failure, not a valid null. Quarantine unless the field is legitimately optional and source value was truly null. |
-| Duplicate Silver key before merge | Deduplicate deterministically or fail the candidate set; never allow ambiguous multi-match merge. |
-| Same Silver key has different payload hash | Default to source-revision review, not silent overwrite. |
-| Incremental rerun adds rows twice | Idempotency defect; fail acceptance. |
-| Backfill changes newer data | Backfill/revision policy defect; restore from raw/replay and investigate. |
-| Watermark moved after failed write | Operational defect; reset watermark from committed state and fix transaction ordering. |
+| Duplicate Silver logical keys | 0 for IBM and NOAA |
+| IBM incremental replay | 33,228 rows read; 0 inserted, 0 updated, 0 quarantined |
+| IBM backfill, 25-26 September 2026 | 4,680 rows selected; 0 inserted, 0 updated on unchanged data |
+| Quarantine test | 2 invalid rows quarantined; 0 reached Silver |
+| Schema-drift notebook | Manual demonstration only; no automated assertion |
+| Silver testing notebook | Manual SQL and file-count verification |
+| CI / automated test workflow | Not present |
 
-## 23. Git and CI discipline
+## 8. Operational run guide
 
-`REQUIRED`
+This is the frozen Phase 2 operating procedure.
 
-- keep executable source, schemas, config examples, tests and documentation in GitHub;
-- use meaningful commits; recommended prefixes are `feat:`, `fix:`, `docs:`, `test:`, `refactor:`, `data:`, `chore:`;
-- use feature branches where practical for architecture/schema changes;
-- do not commit credentials, token caches, local `.env` files or generated secrets;
-- do not commit large raw/binary history unless explicitly required for the academic submission; keep reproducible compact samples instead;
-- synchronize README/data contracts whenever a schema changes;
-- identify/tag the verified Phase 2 milestone after the golden-path demonstration passes.
+### 8.1 Initial setup
 
-`RECOMMENDED`: GitHub Actions may run safe repository tasks such as Python syntax checks, unit tests, schema tests, linting, structure checks and secret scanning. The academic submission must **not** depend on fragile production-like deployment automation.
+1. Run `notebooks/00_setup_databricks.ipynb`.
+2. Use Databricks serverless compute.
+3. Confirm the staging volume and `new/`, `processed/`, and `rejected/` folders exist.
 
-## 24. Security
+### 8.2 Normal incremental load
 
-`REQUIRED`
+1. Let the scheduled workflow run, or trigger it manually, to place new files in `new/`.
+2. Open and run `spark/bronze/ibm_bronze_load.ipynb` and/or `spark/bronze/noaa_bronze_load.ipynb`.
+3. Open `spark/silver/1. Silver Pipeline.ipynb`.
+4. Set `dataset`, `mode`, and `source_file` as required.
+5. Run all cells.
+6. Verify counts and logs with the SQL in the root README.
 
-- never commit IBM/API credentials;
-- never print tokens in logs;
-- `.gitignore` excludes `.env`, local secret files, token caches and generated credentials;
-- sample configuration contains placeholders;
-- collectors strip/check authentication headers before persisting request metadata;
-- raw payloads are reviewed for accidental credentials before public repository publication;
-- public sample data must not include secrets;
-- secret values are injected at runtime.
+### 8.3 Backfill
 
-## 25. Resource control / FinOps
+1. Place the historical file or files in `new/`.
+2. Run the appropriate Bronze notebook.
+3. Run Silver with `mode = backfill` and the required `start_date` / `end_date`.
+4. Verify the execution log and row counts.
 
-- perform one bounded historical baseline rather than repeated full downloads;
-- persist immutable raw history outside Spark compute lifecycle;
-- process candidate new files only;
-- do not keep compute continuously active;
-- use compact Delta/Parquet;
-- avoid over-partitioning small tables;
-- keep sample test datasets small;
-- do not make the academic submission dependent on production-scale orchestration.
+### 8.4 Re-running a file
 
-No physical partitioning is mandated at documentation time. The default for this small dataset is an unpartitioned/simple Delta table unless measured access patterns justify partitioning.
+- Bronze IBM skips a file already present in Bronze.
+- To deliberately reload a file, delete its Bronze rows, copy the file back from `processed/` to `new/`, and rerun Bronze.
+- Silver deduplicates by logical key, but the audit counts will still report the selected input rows.
 
-## 26. Coding Agent Handoff Contract
+## 9. Strengths
 
-Coding agents must:
+- Clear separation between external collection, raw staging, Bronze, and Silver.
+- Explicit Spark schemas with no inference.
+- Raw payload preservation for lineage and reprocessing.
+- Delta `MERGE` for idempotent Silver updates.
+- Quarantine and execution logging instead of silent dropping.
+- UTC normalization.
+- Real, verified full-load and incremental data.
+- Useful data-model diagrams and a practical manual runbook.
+- No credentials or secrets committed to the repository.
 
-1. treat this generated documentation package as the Phase 2 development authority;
-2. follow the documented architecture and layer boundaries;
-3. implement the documented schemas and business keys;
-4. use explicit Spark schemas and strict casts;
-5. preserve immutable raw artifacts and lineage;
-6. implement the documented failure/quarantine behavior;
-7. implement all five execution modes;
-8. implement and pass the documented tests;
-9. follow the documented development order;
-10. not invent alternate architecture silently;
-11. not silently change schemas or keys;
-12. not bypass validation for convenience;
-13. not use `load_timestamp` as a business key;
-14. not hard-code secrets or dates;
-15. not introduce temporal leakage into later research features;
-16. not turn association into causation;
-17. raise a documented architecture change when a contract genuinely must change.
+## 10. Known limitations and Phase 3 handoff
 
-## 27. Phase 2 Definition of Done
+The following are known properties of the frozen Phase 2 implementation:
 
-### Architecture
+- NOAA Kp is incomplete and mixes 3-hourly historical values with minute-level live values.
+- NOAA F10.7 can contain duplicate calendar days because historical and live timestamps differ.
+- Only the collectors are scheduled; Bronze and Silver are manual, and there is no Gold implementation.
+- IBM's full history is capped at 200 MB and five snapshots per day, with no checkpoint/resume or backfill.
+- IBM `Operational` is hard-coded to `"Yes"`.
+- The production IBM collector lacks a cutoff guard.
+- Incremental collection has no overlap or revision window despite documentation claims elsewhere.
+- Silver has no gate table and no per-row collection timestamp.
+- Quarantine has no `run_id`; its row count is batch-based, not insertion-based.
+- The production Silver notebook temporarily writes a QA-only record into the production quarantine table.
+- Test coverage is partly manual and there is no CI workflow.
+- Long-lived Databricks credentials and an unpinned GitHub Action remain in the workflows.
+- Some top-level setup guides, the stale `spark/Silver README.md`, the placeholder files, and dependency metadata still need cleanup.
 
-- [ ] Databricks Free Edition or instructor-approved Azure environment initialized.
-- [ ] Repository structure implemented.
-- [ ] External collection boundary implemented.
-- [ ] Dependencies pinned/documented.
-- [ ] Configuration and secret-handling paths implemented.
+All required changes are documented in [`Phase3/Phase2_Leftovers.md`](../Phase3/Phase2_Leftovers.md). They are deliberately not implemented in Phase 2.
 
-### Bronze
+## 11. Documentation map
 
-- [ ] IBM Bronze implemented.
-- [ ] NOAA Bronze implemented.
-- [ ] Explicit input schemas used; no inference.
-- [ ] Exact raw payload preserved.
-- [ ] Payload SHA-256 stored.
-- [ ] `load_timestamp` stored.
-- [ ] `run_id` / `batch_id` lineage stored.
-- [ ] Stable record identity stored.
-- [ ] Duplicate raw reprocessing is a no-op.
-
-### Silver
-
-- [ ] `silver_backend` implemented.
-- [ ] `silver_qubit_calibration` implemented.
-- [ ] `silver_gate_calibration` implemented.
-- [ ] `silver_environment` implemented.
-- [ ] Strict casts and UTC timestamp normalization implemented.
-- [ ] Stable business keys enforced.
-- [ ] `load_timestamp` present.
-- [ ] Invalid values handled by documented policy.
-- [ ] Source revision policy enforced.
-
-### Robustness
-
-- [ ] Delta `MERGE` demonstrated.
-- [ ] Full load works.
-- [ ] Incremental mode works.
-- [ ] Backfill works.
-- [ ] Replay works.
-- [ ] Validation-only mode is side-effect safe.
-- [ ] Watermark + overlap works.
-- [ ] Schema drift detected.
-- [ ] Quarantine replay works.
-- [ ] Failed runs do not corrupt Silver.
-- [ ] Repeated input creates no logical duplicates.
-
-### Logging / quality
-
-- [ ] Execution log table exists.
-- [ ] Schema drift log exists.
-- [ ] Quarantine table exists.
-- [ ] Watermark table exists.
-- [ ] Insert/update/unchanged/quarantine counts logged.
-- [ ] Start/end/status/parameters logged.
-- [ ] Reconciliation is visible.
-- [ ] Unit/integration/DQ/idempotency/backfill/replay/failure tests pass.
-
-### Research readiness
-
-- [ ] Backend identity preserved.
-- [ ] Calibration/collection timestamps preserved.
-- [ ] Qubit grain preserved.
-- [ ] Gate endpoints/type preserved.
-- [ ] T1/T2 and error measures preserved where source provides them.
-- [ ] Environmental source timestamps preserved.
-- [ ] No composite research score replaces raw Silver measures.
-- [ ] Phase 3 contract accepted.
-
-## 28. Requirement-to-implementation traceability matrix
-
-| Official / project requirement | Implementation location |
+| Document | Purpose |
 |---|---|
-| Databricks Community Edition or Azure requirement updated to current platform | README §4; Architecture §2 |
-| GitHub version control | README §7 and §23; Architecture repository model |
-| Bronze + Silver models | Data Contract §§3–10 |
-| No Spark schema inference | Data Contract §4; explicit `StructType` code |
-| Strict casting | Data Contract §11 |
-| `load_timestamp` every Bronze/Silver record | Every Bronze/Silver schema |
-| Idempotency | README §15; Data Contract §13; Test Plan idempotency tests |
-| Delta `MERGE INTO` | Data Contract §13; Runbook merge workflow |
-| Parameterized backfills | README §10–11; Runbook |
-| Schema drift | README §17; Data Contract §12; Runbook |
-| Dedicated logging | Data Contract operational tables; Runbook audit inspection |
-| Audit metrics | `pipeline_execution_logs` contract |
-| GitHub executable pipeline | Repository structure + Coding Agent Handoff |
-| README models/execution | This README |
-| Backfill guide | Runbook backfill section |
-| Research preservation | Phase2-to-Gold contract |
-| No causal leap from space weather | Phase2-to-Gold scientific guardrails |
-| Future temporal prediction without leakage | Phase2-to-Gold prediction section |
+| `README.md` (root) | Public project overview, data model, run guide, verification SQL, and QA summary |
+| `Phase2/README.md` (this file) | Final as-built Phase 2 documentation and evidence |
+| `Phase3/Phase2_Leftovers.md` | Deferred defects, limitations, and required Phase 3 changes |
+| `docs/diagrams/quantalytics_data_models.dbml` | Current data-model diagram source |
+| `docs/diagrams/quantalytics_data_models.png` / `.pdf` | Rendered data-model diagrams |
+| Notebooks under `spark/` | Executable implementation of the documented behavior |
 
-## 29. Academic evidence / demo checklist
+## 12. Freeze declaration
 
-Capture evidence of behavior, not only source code:
+Phase 2 is documentation-frozen. The collectors, workflows, notebooks, and table definitions are not changed as part of this documentation cleanup.
 
-1. repository tree;
-2. explicit `StructType` definitions;
-3. IBM/NOAA staged raw examples with secrets removed;
-4. Bronze schemas;
-5. Silver schemas;
-6. successful full-load run;
-7. successful incremental run;
-8. incremental re-run with zero logical duplication;
-9. successful arbitrary-date backfill;
-10. same backfill re-run;
-11. `MERGE` implementation and target row counts;
-12. `pipeline_execution_logs`;
-13. watermark before/after;
-14. schema-drift event;
-15. quarantined record;
-16. replay of remediated quarantine;
-17. source-to-Bronze-to-Silver lineage example;
-18. reconciliation checks;
-19. test summary;
-20. README/runbook execution example.
-
-Do not fabricate row counts or screenshots. Capture them only after the implementation executes.
-
-## 30. Known assumptions, validations and open decisions
-
-| Item | Status | Required action |
-|---|---|---|
-| Actual Phase 1 document was not separately supplied to this documentation-generation run; Phase 1 intent is taken from the master specification/prompt. | `ASSUMPTION` | If an original Phase 1 file is later supplied, compare it using the declared source-of-truth hierarchy. |
-| Exact IBM response shape for the project account/backends. | `VALIDATION REQUIRED` | Freeze at least one real/sample payload per targeted backend before finalizing source-field adapters. |
-| Whether the same IBM `last_update_date` can legitimately produce multiple distinct payload revisions. | `VALIDATION REQUIRED` | Validate against frozen history; Bronze already supports multiple hashes safely. |
-| Automatic precedence for same-Silver-key source revisions. | `OPEN DECISION` | Default is no silent overwrite; owner must approve a deterministic revision rule before enabling updates. |
-| Exact canonical single-qubit gate used for `single_gate_error` in qubit table. | `OPEN DECISION` | Configure after sample inspection; never pick arbitrarily. |
-| `processor_family` reliable source mapping. | `VALIDATION REQUIRED` | Populate only from verified backend metadata; otherwise nullable. |
-| Full physical coupling graph source | `OPEN DECISION` for Phase 3 | Phase 2 preserves calibrated gate endpoints; add separately versioned topology metadata later if required. |
-| Default overlap-window size | `OPEN DECISION` | Keep configurable; choose from actual collection cadence/source revision behavior. |
-| Physical table partitioning | `RECOMMENDED: none initially` | Introduce only if measured data volume/read patterns justify it. |
-
-## 31. Explicit Phase 3 handoff contract
-
-Phase 3 may rely on Phase 2 to provide:
-
-- stable, unique backend/calibration identity;
-- calibrated qubit-level temporal observations;
-- calibrated two-qubit gate observations with ordered endpoints/type;
-- source observation times for environmental series;
-- immutable raw lineage;
-- source payload hashes;
-- deterministic replay;
-- UTC timestamp semantics;
-- no Gold-derived target leakage baked into Silver.
-
-Phase 3 **must not** assume:
-
-- that a particular drift magnitude exists;
-- that a particular qubit/backend is "best";
-- that a source revision was automatically scientifically correct;
-- that Kp or solar flux causes QPU reliability change;
-- that one arbitrary single-qubit instruction represents all 1Q performance;
-- that Phase 2 Silver contains a complete static coupling graph unless a separate topology contract is later implemented.
-
-The detailed research handoff is defined in `docs/research/phase2-to-gold-contract.md`.
+The code and notebooks are the source of truth where any residual wording differs. Phase 3 owns all behavioral changes and the remediation backlog.
