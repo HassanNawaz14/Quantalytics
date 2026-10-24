@@ -1,0 +1,155 @@
+// Quantalytics Phase 3 Gold Layer - Star/Snowflake Schema (DBML for dbdiagram.io)
+
+Table dim_date {
+  date_key int [pk, note: "format yyyyMMdd, e.g. 20260925"]
+  full_date date
+  year int
+  quarter int
+  month int
+  month_name string
+  year_month string
+  month_sort int
+  day_of_month int
+  day_name string
+  week_of_year int
+  is_weekend boolean
+}
+
+Table dim_time {
+  time_key int [pk, note: "format HHmmss"]
+  hour_24 int
+  minute int
+  second int
+  time_label string
+  time_bucket_3h int
+  hour_bucket int
+}
+
+Table dim_backend {
+  backend_key string [pk, note: "SHA-256 of backend_id"]
+  backend_id string [unique]
+  backend_name string
+  provider string
+  first_seen timestamp
+  last_seen timestamp
+}
+
+Table dim_qubit {
+  qubit_key string [pk, note: "SHA-256 of backend_id || qubit_id"]
+  backend_key string [ref: > dim_backend.backend_key]
+  qubit_id int
+  first_seen timestamp
+  last_seen timestamp
+}
+
+Table dim_observation_type {
+  observation_type_key string [pk, note: "SHA-256 of observation_type"]
+  observation_type string [unique]
+  description string
+  default_unit string
+}
+
+Table dim_stage {
+  stage_key string [pk, note: "SHA-256 of stage"]
+  stage string [unique]
+}
+
+Table dim_dataset {
+  dataset_key string [pk, note: "SHA-256 of dataset"]
+  dataset string [unique]
+}
+
+Table dim_mode {
+  mode_key string [pk, note: "SHA-256 of mode"]
+  mode string [unique]
+}
+
+Table dim_status {
+  status_key string [pk, note: "SHA-256 of status"]
+  status string [unique]
+  is_success boolean
+  is_failure boolean
+}
+
+Table dim_error_reason {
+  error_reason_key string [pk, note: "SHA-256 of error_reason"]
+  error_reason string [unique]
+}
+
+Table fact_qubit_calibration {
+  calibration_key string [pk, note: "Silver record_key"]
+  date_key int [ref: > dim_date.date_key]
+  time_key int [ref: > dim_time.time_key]
+  backend_key string [ref: > dim_backend.backend_key]
+  qubit_key string [ref: > dim_qubit.qubit_key]
+  t1_us double
+  t2_us double
+  readout_error double
+  init_error double
+  operational boolean
+  source_file string
+  silver_load_timestamp timestamp
+}
+
+Table fact_environment {
+  environment_key string [pk, note: "Silver record_key"]
+  date_key int [ref: > dim_date.date_key]
+  time_key int [ref: > dim_time.time_key]
+  observation_type_key string [ref: > dim_observation_type.observation_type_key]
+  observation_type string
+  kp_index double
+  solar_flux double
+  source string
+  source_file string
+  silver_load_timestamp timestamp
+}
+
+Table fact_backend_daily {
+  backend_daily_key string [pk, note: "SHA-256 of backend_id || date_key"]
+  date_key int [ref: > dim_date.date_key]
+  backend_key string [ref: > dim_backend.backend_key]
+  calibration_count bigint
+  qubit_count bigint
+  avg_t1_us double
+  min_t1_us double
+  max_t1_us double
+  avg_t2_us double
+  min_t2_us double
+  max_t2_us double
+  avg_readout_error double
+  avg_init_error double
+  operational_measurement_pct double
+  avg_kp double
+  max_kp double
+  avg_f107_solar_flux double
+}
+
+Table fact_pipeline_run {
+  pipeline_run_key string [pk, note: "SHA-256 of run/stage/dataset/start"]
+  run_id string
+  date_key int [ref: > dim_date.date_key]
+  time_key int [ref: > dim_time.time_key]
+  stage_key string [ref: > dim_stage.stage_key]
+  dataset_key string [ref: > dim_dataset.dataset_key]
+  mode_key string [ref: > dim_mode.mode_key]
+  status_key string [ref: > dim_status.status_key]
+  started_at timestamp
+  finished_at timestamp
+  duration_seconds bigint
+  input_rows bigint
+  rows_inserted bigint
+  rows_updated bigint
+  rows_quarantined bigint
+  error_message string
+  parameters string
+}
+
+Table fact_quarantine {
+  quarantine_key string [pk, note: "Silver record_key"]
+  date_key int [ref: > dim_date.date_key]
+  time_key int [ref: > dim_time.time_key]
+  dataset_key string [ref: > dim_dataset.dataset_key]
+  error_reason_key string [ref: > dim_error_reason.error_reason_key]
+  source_file string
+  quarantined_at timestamp
+}

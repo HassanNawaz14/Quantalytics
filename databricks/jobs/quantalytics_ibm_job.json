@@ -1,0 +1,53 @@
+{
+  "name": "quantalytics-ibm-pipeline",
+  "max_concurrent_runs": 1,
+  "parameters": [
+    {"name": "mode", "default": "incremental"},
+    {"name": "source_file", "default": ""},
+    {"name": "start_date", "default": ""},
+    {"name": "end_date", "default": ""}
+  ],
+  "tasks": [
+    {
+      "task_key": "ibm_bronze",
+      "notebook_task": {
+        "notebook_path": "/Workspace/Repos/Quantalytics/spark/bronze/ibm_bronze_load"
+      },
+      "existing_cluster_id": "",
+      "timeout_seconds": 3600,
+      "max_retries": 1
+    },
+    {
+      "task_key": "ibm_silver",
+      "depends_on": [{"task_key": "ibm_bronze"}],
+      "notebook_task": {
+        "notebook_path": "/Workspace/Repos/Quantalytics/spark/silver/1. Silver Pipeline",
+        "base_parameters": {
+          "dataset": "ibm",
+          "mode": "{{job.parameters.mode}}",
+          "source_file": "{{job.parameters.source_file}}",
+          "start_date": "{{job.parameters.start_date}}",
+          "end_date": "{{job.parameters.end_date}}"
+        }
+      },
+      "existing_cluster_id": "",
+      "timeout_seconds": 3600,
+      "max_retries": 1
+    },
+    {
+      "task_key": "gold_layer",
+      "depends_on": [{"task_key": "ibm_silver"}],
+      "notebook_task": {
+        "notebook_path": "/Workspace/Repos/Quantalytics/spark/gold/1. Gold Pipeline",
+        "base_parameters": {
+          "mode": "{{job.parameters.mode}}",
+          "start_date": "{{job.parameters.start_date}}",
+          "end_date": "{{job.parameters.end_date}}"
+        }
+      },
+      "existing_cluster_id": "",
+      "timeout_seconds": 3600,
+      "max_retries": 1
+    }
+  ]
+}
