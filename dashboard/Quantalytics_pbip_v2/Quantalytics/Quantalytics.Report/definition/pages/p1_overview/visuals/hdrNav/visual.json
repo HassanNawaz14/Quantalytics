@@ -1,0 +1,16 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "hdrNav",
+  "position": {
+    "x": 640,
+    "y": 14,
+    "z": 1000,
+    "height": 40,
+    "width": 620,
+    "tabOrder": 1000
+  },
+  "visual": {
+    "visualType": "pageNavigator",
+    "drillFilterOtherVisuals": true
+  }
+}

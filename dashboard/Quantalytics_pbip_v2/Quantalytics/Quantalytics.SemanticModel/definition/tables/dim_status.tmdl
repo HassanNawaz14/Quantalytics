@@ -1,0 +1,43 @@
+table dim_status
+	lineageTag: 4c22dbf4-616b-4ade-afb3-ec2bddfb977a
+
+	column status_key
+		dataType: string
+		isHidden
+		lineageTag: 55fc4e82-584c-414f-bca6-23381a16e506
+		summarizeBy: none
+		sourceColumn: status_key
+
+	column Status
+		dataType: string
+		lineageTag: be859550-9323-4792-8511-927b9557d5d2
+		summarizeBy: none
+		sourceColumn: status
+
+	column is_success
+		dataType: boolean
+		isHidden
+		lineageTag: 6acd230c-75a7-4d4f-8e67-7476a0543a48
+		summarizeBy: none
+		sourceColumn: is_success
+
+	column is_failure
+		dataType: boolean
+		isHidden
+		lineageTag: ca075539-f67c-4047-85a6-c739f629ba7f
+		summarizeBy: none
+		sourceColumn: is_failure
+
+	partition dim_status = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "dim_status", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

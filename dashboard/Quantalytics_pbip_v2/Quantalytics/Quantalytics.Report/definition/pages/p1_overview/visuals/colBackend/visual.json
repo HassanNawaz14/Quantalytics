@@ -1,0 +1,108 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "colBackend",
+  "position": {
+    "x": 20,
+    "y": 476,
+    "z": 13000,
+    "height": 236,
+    "width": 400,
+    "tabOrder": 13000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_backend"
+                    }
+                  },
+                  "Property": "Backend"
+                }
+              },
+              "queryRef": "dim_backend.Backend",
+              "nativeQueryRef": "Backend",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_qubit_calibration"
+                    }
+                  },
+                  "Property": "Avg T1 (µs)"
+                }
+              },
+              "queryRef": "fact_qubit_calibration.Avg T1 (µs)",
+              "nativeQueryRef": "Avg T1 (µs)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_qubit_calibration"
+                    }
+                  },
+                  "Property": "Avg T2 (µs)"
+                }
+              },
+              "queryRef": "fact_qubit_calibration.Avg T2 (µs)",
+              "nativeQueryRef": "Avg T2 (µs)"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Avg T1 & T2 by Backend'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

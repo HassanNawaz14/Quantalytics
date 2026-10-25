@@ -1,0 +1,80 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "colHrT",
+  "position": {
+    "x": 430,
+    "y": 144,
+    "z": 5000,
+    "height": 270,
+    "width": 400,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_time"
+                    }
+                  },
+                  "Property": "Hour"
+                }
+              },
+              "queryRef": "dim_time.Hour",
+              "nativeQueryRef": "Hour",
+              "active": true,
+              "displayName": "Hour (UTC)"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_qubit_calibration"
+                    }
+                  },
+                  "Property": "Avg T1 (µs)"
+                }
+              },
+              "queryRef": "fact_qubit_calibration.Avg T1 (µs)",
+              "nativeQueryRef": "Avg T1 (µs)"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Avg T1 by Calibration Hour (UTC)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

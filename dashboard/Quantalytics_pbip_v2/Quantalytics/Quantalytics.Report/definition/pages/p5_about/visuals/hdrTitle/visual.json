@@ -1,0 +1,49 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "hdrTitle",
+  "position": {
+    "x": 20,
+    "y": 6,
+    "z": 0,
+    "height": 58,
+    "width": 600,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "About & Data Notes",
+                    "textStyle": {
+                      "fontSize": "20pt",
+                      "color": "#E8ECF8",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "How this report maps to the Quantalytics Gold layer",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#AAB3D1"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

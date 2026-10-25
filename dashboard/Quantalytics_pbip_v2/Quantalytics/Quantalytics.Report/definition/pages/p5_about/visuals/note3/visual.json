@@ -1,0 +1,104 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "note3",
+  "position": {
+    "x": 20,
+    "y": 386,
+    "z": 5000,
+    "height": 326,
+    "width": 1240,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Coverage notes and known limitations",
+                    "textStyle": {
+                      "fontSize": "13pt",
+                      "color": "#E8ECF8",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "• Kp is the historical 3-hourly series only until NOAA ingestion is rebuilt (recent Kp gap). F10.7 is one value per calendar day.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "• IBM history is sampled and bounded by the collector; read it as available IBM calibration history, not a complete year.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "• Operational Rate is not a real health signal until the collector reads the true operational state.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "• Gate-level metrics and collection-lag analysis are excluded: they are not in Silver.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "• Correlations are exploratory associations, not causation.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "• To point this report at another workspace, edit the DatabricksHost, DatabricksHttpPath, DatabricksCatalog and DatabricksSchema parameters in Transform data.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

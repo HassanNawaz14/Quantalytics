@@ -1,0 +1,103 @@
+{
+  "name": "Quantalytics",
+  "dataColors": [
+    "#5EEAD4",
+    "#7C5CFF",
+    "#F59E0B",
+    "#38BDF8",
+    "#F472B6",
+    "#A3E635",
+    "#FB7185",
+    "#818CF8"
+  ],
+  "background": "#141B34",
+  "foreground": "#E8ECF8",
+  "tableAccent": "#7C5CFF",
+  "firstLevelElements": "#E8ECF8",
+  "secondLevelElements": "#AAB3D1",
+  "thirdLevelElements": "#2A3358",
+  "fourthLevelElements": "#3A4470",
+  "secondaryBackground": "#1B2444",
+  "maximum": "#5EEAD4",
+  "center": "#F59E0B",
+  "minimum": "#FB7185",
+  "good": "#5EEAD4",
+  "neutral": "#F59E0B",
+  "bad": "#FB7185",
+  "textClasses": {
+    "callout": {
+      "fontSize": 26,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#5EEAD4"
+    },
+    "title": {
+      "fontSize": 11,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#E8ECF8"
+    },
+    "header": {
+      "fontSize": 11,
+      "fontFace": "Segoe UI Semibold",
+      "color": "#E8ECF8"
+    },
+    "label": {
+      "fontSize": 10,
+      "fontFace": "Segoe UI",
+      "color": "#AAB3D1"
+    }
+  },
+  "visualStyles": {
+    "*": {
+      "*": {
+        "title": [
+          {
+            "show": true,
+            "fontColor": {
+              "solid": {
+                "color": "#E8ECF8"
+              }
+            },
+            "fontSize": 11,
+            "alignment": "left"
+          }
+        ],
+        "background": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#141B34"
+              }
+            },
+            "transparency": 0
+          }
+        ],
+        "border": [
+          {
+            "show": true,
+            "color": {
+              "solid": {
+                "color": "#2A3358"
+              }
+            },
+            "radius": 8
+          }
+        ],
+        "visualHeader": [
+          {
+            "show": false
+          }
+        ]
+      }
+    },
+    "card": {
+      "*": {
+        "categoryLabels": [
+          {
+            "show": false
+          }
+        ]
+      }
+    }
+  }
+}

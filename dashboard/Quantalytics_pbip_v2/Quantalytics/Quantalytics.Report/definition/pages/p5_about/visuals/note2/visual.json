@@ -1,0 +1,82 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "note2",
+  "position": {
+    "x": 840,
+    "y": 76,
+    "z": 4000,
+    "height": 300,
+    "width": 420,
+    "tabOrder": 4000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "KPI definitions",
+                    "textStyle": {
+                      "fontSize": "13pt",
+                      "color": "#E8ECF8",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "T1/T2: arithmetic mean in µs, nulls ignored.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Readout / init error: fraction in [0,1], shown as %.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Pipeline success %: successful log entries ÷ all log entries.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Data freshness: hours since latest Silver load (not source collection lag).",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

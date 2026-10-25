@@ -1,0 +1,145 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "tbCov",
+  "position": {
+    "x": 530,
+    "y": 488,
+    "z": 14000,
+    "height": 224,
+    "width": 730,
+    "tabOrder": 14000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_backend"
+                    }
+                  },
+                  "Property": "Backend"
+                }
+              },
+              "queryRef": "dim_backend.Backend",
+              "nativeQueryRef": "Backend",
+              "displayName": "Backend"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "First Calibration Date"
+                }
+              },
+              "queryRef": "fact_backend_daily.First Calibration Date",
+              "nativeQueryRef": "First Calibration Date"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Last Calibration Date"
+                }
+              },
+              "queryRef": "fact_backend_daily.Last Calibration Date",
+              "nativeQueryRef": "Last Calibration Date"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Backend-Days"
+                }
+              },
+              "queryRef": "fact_backend_daily.Backend-Days",
+              "nativeQueryRef": "Backend-Days"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Data Coverage %"
+                }
+              },
+              "queryRef": "fact_backend_daily.Data Coverage %",
+              "nativeQueryRef": "Data Coverage %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_qubit_calibration"
+                    }
+                  },
+                  "Property": "Qubits Measured"
+                }
+              },
+              "queryRef": "fact_qubit_calibration.Qubits Measured",
+              "nativeQueryRef": "Qubits Measured"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_qubit_calibration"
+                    }
+                  },
+                  "Property": "Calibration Rows"
+                }
+              },
+              "queryRef": "fact_qubit_calibration.Calibration Rows",
+              "nativeQueryRef": "Calibration Rows"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Backend Coverage Summary'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "note1",
+  "position": {
+    "x": 430,
+    "y": 76,
+    "z": 3000,
+    "height": 300,
+    "width": 400,
+    "tabOrder": 3000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Semantic model",
+                    "textStyle": {
+                      "fontSize": "13pt",
+                      "color": "#E8ECF8",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Star schema over workspace.gold: dim_date, dim_time, dim_backend, dim_qubit (snowflaked), dim_observation_type, dim_stage, dim_dataset, dim_mode, dim_status, dim_error_reason.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Facts: fact_qubit_calibration, fact_environment, fact_backend_daily, fact_pipeline_run, fact_quarantine. All relationships are many-to-one, single direction.",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

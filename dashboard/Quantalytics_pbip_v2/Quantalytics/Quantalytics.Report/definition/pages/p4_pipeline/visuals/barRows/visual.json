@@ -1,0 +1,93 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "barRows",
+  "position": {
+    "x": 890,
+    "y": 238,
+    "z": 13000,
+    "height": 240,
+    "width": 370,
+    "tabOrder": 13000
+  },
+  "visual": {
+    "visualType": "clusteredBarChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_stage"
+                    }
+                  },
+                  "Property": "Stage"
+                }
+              },
+              "queryRef": "dim_stage.Stage",
+              "nativeQueryRef": "Stage",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_pipeline_run"
+                    }
+                  },
+                  "Property": "Total Rows Inserted"
+                }
+              },
+              "queryRef": "fact_pipeline_run.Total Rows Inserted",
+              "nativeQueryRef": "Total Rows Inserted"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_pipeline_run"
+                    }
+                  },
+                  "Property": "Total Rows Updated"
+                }
+              },
+              "queryRef": "fact_pipeline_run.Total Rows Updated",
+              "nativeQueryRef": "Total Rows Updated"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Rows Inserted & Updated by Stage'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

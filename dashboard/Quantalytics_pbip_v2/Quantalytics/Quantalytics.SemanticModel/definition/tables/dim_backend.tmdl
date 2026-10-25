@@ -1,0 +1,63 @@
+table dim_backend
+	lineageTag: ba7a5a94-aceb-47cd-a658-a5c511349a28
+
+	column backend_key
+		dataType: string
+		isHidden
+		lineageTag: 2508bd7c-fb1d-4f72-bea4-eb373210450a
+		summarizeBy: none
+		sourceColumn: backend_key
+
+	column 'Backend ID'
+		dataType: string
+		lineageTag: cb74330a-88e6-422c-b98d-3fd1381b641b
+		summarizeBy: none
+		sourceColumn: backend_id
+
+	column Backend
+		dataType: string
+		lineageTag: 0b14c975-8a9e-46bf-acc7-5b7d2233040d
+		summarizeBy: none
+		sourceColumn: backend_name
+
+	column Provider
+		dataType: string
+		lineageTag: f6eed074-5c67-4329-a69c-1f4a1f2efeb2
+		summarizeBy: none
+		sourceColumn: provider
+
+	column 'First Seen'
+		dataType: dateTime
+		lineageTag: a64c655c-cf87-49ac-ada7-b39baf4e5945
+		summarizeBy: none
+		sourceColumn: first_seen
+
+		variation Variation
+			isDefault
+			relationship: 0ea7f2fc-6abd-488c-b822-047b52202902
+			defaultHierarchy: LocalDateTable_33ab3d36-4c6d-44d2-b6ec-dca65f41c907.'Date Hierarchy'
+
+	column 'Last Seen'
+		dataType: dateTime
+		lineageTag: 282437e2-9464-438a-9adc-465cba9aadd7
+		summarizeBy: none
+		sourceColumn: last_seen
+
+		variation Variation
+			isDefault
+			relationship: ee610c53-c11e-493c-89ee-17d239dee42f
+			defaultHierarchy: LocalDateTable_83fadb32-1383-4d0d-ab72-efc42c4a12dd.'Date Hierarchy'
+
+	partition dim_backend = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "dim_backend", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

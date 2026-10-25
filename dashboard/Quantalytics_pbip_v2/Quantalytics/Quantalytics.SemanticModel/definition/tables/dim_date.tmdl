@@ -1,0 +1,111 @@
+table dim_date
+	lineageTag: 998be565-5826-416a-9040-edc506ed0b8e
+	dataCategory: Time
+
+	column date_key
+		dataType: int64
+		isHidden
+		lineageTag: 1ac248ac-ad9e-46f9-acca-782f45c67ae9
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: yyyy-mm-dd
+		lineageTag: 32f1c072-b566-4dfe-862b-bc3e1ac25dd5
+		summarizeBy: none
+		sourceColumn: full_date
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Year
+		dataType: int64
+		lineageTag: e889b417-6c1f-4a4e-907e-b3667b8b4c05
+		summarizeBy: none
+		sourceColumn: year
+
+	column Quarter
+		dataType: int64
+		lineageTag: 1af31a47-818f-4b8a-ae33-a238f4a1cad0
+		summarizeBy: none
+		sourceColumn: quarter
+
+	column 'Month Number'
+		dataType: int64
+		lineageTag: acd40ffc-cfad-4b17-b133-70af0a17df73
+		summarizeBy: none
+		sourceColumn: month
+
+	column Month
+		dataType: string
+		lineageTag: 65b80752-e19d-46fc-8f29-6557f89edf3d
+		summarizeBy: none
+		sourceColumn: month_name
+		sortByColumn: 'Month Sort'
+
+	column Year-Month
+		dataType: string
+		lineageTag: ae23ea76-f700-4620-ad13-f9227e38cf17
+		summarizeBy: none
+		sourceColumn: year_month
+		sortByColumn: 'Month Sort'
+
+	column 'Month Sort'
+		dataType: int64
+		isHidden
+		lineageTag: 61bfe539-5860-4361-b83f-d2426fdd4554
+		summarizeBy: none
+		sourceColumn: month_sort
+
+	column Day
+		dataType: int64
+		lineageTag: c3bf829a-3a7d-41fc-9314-13a7bc092af2
+		summarizeBy: none
+		sourceColumn: day_of_month
+
+	column Weekday
+		dataType: string
+		lineageTag: 1b14ea24-d92e-4aa6-a872-b0a65ed292f5
+		summarizeBy: none
+		sourceColumn: day_name
+
+	column 'Week of Year'
+		dataType: int64
+		lineageTag: 7117c843-ffaa-4ed1-9496-04000986494e
+		summarizeBy: none
+		sourceColumn: week_of_year
+
+	column 'Is Weekend'
+		dataType: boolean
+		lineageTag: f418bc94-d3a0-4e8d-a920-a565a08fef49
+		summarizeBy: none
+		sourceColumn: is_weekend
+
+	column 'Weekday Short' = FORMAT ( dim_date[Date], "ddd" )
+		dataType: string
+		lineageTag: 58c8c81a-3803-428d-8e5c-29ef827f182e
+		summarizeBy: none
+		sortByColumn: 'Weekday Order'
+
+	column 'Weekday Order' = WEEKDAY ( dim_date[Date], 2 )
+		dataType: int64
+		formatString: 0
+		lineageTag: 1a5a509a-ab7c-48c6-a75b-e7c635d2d6b8
+		summarizeBy: none
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "dim_date", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Table
+

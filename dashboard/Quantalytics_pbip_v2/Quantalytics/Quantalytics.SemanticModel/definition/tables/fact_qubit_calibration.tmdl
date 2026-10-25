@@ -1,0 +1,276 @@
+table fact_qubit_calibration
+	lineageTag: 9efa6f74-ecd8-4ce2-9519-3093772e12d9
+
+	measure 'Calibration Rows' = COUNTROWS ( fact_qubit_calibration )
+		formatString: #,0
+		displayFolder: Volume
+		lineageTag: fac93415-5bac-45d2-a5f2-17dd59389a76
+
+	measure 'Qubits Measured' = DISTINCTCOUNT ( fact_qubit_calibration[qubit_key] )
+		formatString: #,0
+		displayFolder: Volume
+		lineageTag: 8d4ce149-72ae-4399-8302-1d3f1b81af7b
+
+	measure 'Backends Observed' = DISTINCTCOUNT ( fact_qubit_calibration[backend_key] )
+		formatString: #,0
+		displayFolder: Volume
+		lineageTag: 7067803f-dea5-4e51-b3aa-a9fedbb73cb6
+
+	measure 'Avg T1 (µs)' = AVERAGE ( fact_qubit_calibration[T1 (µs)] )
+		formatString: #,0.0
+		displayFolder: Coherence
+		lineageTag: 9d7910bb-402a-4d53-a90d-2d1f5c27d17a
+
+	measure 'Avg T2 (µs)' = AVERAGE ( fact_qubit_calibration[T2 (µs)] )
+		formatString: #,0.0
+		displayFolder: Coherence
+		lineageTag: e9b0f4a9-ffb5-4696-8ab0-ad67a3aa80fa
+
+	measure 'Avg Readout Error' = AVERAGE ( fact_qubit_calibration[Readout Error] )
+		formatString: 0.00%
+		displayFolder: Errors
+		lineageTag: e9d9d0e1-f203-47bd-9da1-b6400f702b0e
+
+	measure 'Avg Init Error' = AVERAGE ( fact_qubit_calibration[Init Error] )
+		formatString: 0.00%
+		displayFolder: Errors
+		lineageTag: 02035858-acb2-4854-9fe5-19572b5055a6
+
+	measure 'Operational Rate' = DIVIDE ( CALCULATE ( COUNTROWS ( fact_qubit_calibration ), fact_qubit_calibration[Operational] = TRUE () ), COUNTROWS ( fact_qubit_calibration ) )
+		formatString: 0.0%
+		displayFolder: Errors
+		lineageTag: d4542278-1f96-45c1-86fb-cae4f9b09cc2
+
+	measure 'T1 Std Dev (µs)' = STDEV.P ( fact_qubit_calibration[T1 (µs)] )
+		formatString: #,0.0
+		displayFolder: Variability
+		lineageTag: 67c87bc2-3138-4910-86cb-f15947d6f40d
+
+	measure 'T1 Variability (CoV)' = DIVIDE ( [T1 Std Dev (µs)], [Avg T1 (µs)] )
+		formatString: 0.0%
+		displayFolder: Variability
+		lineageTag: fdf15f97-98dd-4dca-ad96-1d7f4a3f4806
+
+	measure 'Readout Error Std Dev' = STDEV.P ( fact_qubit_calibration[Readout Error] )
+		formatString: 0.00%
+		displayFolder: Variability
+		lineageTag: 282302a4-5dc7-49a0-8861-a828c0248c70
+
+	measure 'Avg T1 Last 7d (µs)' = VAR d = MAX ( dim_date[Date] ) RETURN CALCULATE ( [Avg T1 (µs)], DATESINPERIOD ( dim_date[Date], d, -7, DAY ) )
+		formatString: #,0.0
+		displayFolder: Degradation
+		lineageTag: 5e5aa0bf-be24-483c-ac49-2cf5f2b73b23
+
+	measure 'Avg T1 Prev 7d (µs)' = VAR d = MAX ( dim_date[Date] ) RETURN CALCULATE ( [Avg T1 (µs)], DATESINPERIOD ( dim_date[Date], d - 7, -7, DAY ) )
+		formatString: #,0.0
+		displayFolder: Degradation
+		lineageTag: c7fec851-05d7-4860-90be-4fba07a19479
+
+	measure 'T1 Change vs Prev 7d' = DIVIDE ( [Avg T1 Last 7d (µs)] - [Avg T1 Prev 7d (µs)], [Avg T1 Prev 7d (µs)] )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Degradation
+		lineageTag: 963010be-277c-4d5b-b2bf-26c086b534d1
+
+	measure 'Latest Silver Load' = MAX ( fact_qubit_calibration[Silver Load Time] )
+		formatString: yyyy-mm-dd hh:nn
+		displayFolder: Freshness
+		lineageTag: 9beba8b9-6300-4625-8e5a-93b5e6e86715
+
+	measure 'Data Freshness (hours)' = DATEDIFF ( [Latest Silver Load], NOW (), HOUR )
+		formatString: #,0
+		displayFolder: Freshness
+		lineageTag: 9cd6e8c1-672a-4fbf-a320-3e043697dded
+
+	measure 'T1 Index' = DIVIDE ( [Avg T1 (µs)], MAXX ( ALLSELECTED ( dim_backend[Backend] ), [Avg T1 (µs)] ) )
+		formatString: 0.00
+		displayFolder: Health Index
+		lineageTag: dfc6c158-a088-47c5-afa4-450d9bbc9aa9
+
+	measure 'T2 Index' = DIVIDE ( [Avg T2 (µs)], MAXX ( ALLSELECTED ( dim_backend[Backend] ), [Avg T2 (µs)] ) )
+		formatString: 0.00
+		displayFolder: Health Index
+		lineageTag: 5a30db3d-7441-4c56-8afc-172e1e8f48be
+
+	measure 'Readout Index' = DIVIDE ( MINX ( ALLSELECTED ( dim_backend[Backend] ), [Avg Readout Error] ), [Avg Readout Error] )
+		formatString: 0.00
+		displayFolder: Health Index
+		lineageTag: 042c9b7b-fb26-43a7-9bff-79fb80290ecf
+
+	measure 'Backend Health Index' = 100 * ( 0.4 * [T1 Index] + 0.3 * [T2 Index] + 0.3 * [Readout Index] )
+		formatString: 0.0
+		displayFolder: Health Index
+		lineageTag: fc4d5e26-e71e-47e5-9f34-ec0dec89623d
+
+	measure 'Avg T1 Storm Days (µs)' = VAR s = FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( MAX ( fact_environment[Kp Index] ) ) >= 5 ) RETURN CALCULATE ( [Avg T1 (µs)], s )
+		formatString: #,0.0
+		displayFolder: Storm Sensitivity
+		lineageTag: 9f024806-8de9-4f82-99d0-0599d46fb2bc
+
+	measure 'Avg T1 Quiet Days (µs)' = VAR s = FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( CALCULATE ( MAX ( fact_environment[Kp Index] ) ) ) && CALCULATE ( MAX ( fact_environment[Kp Index] ) ) < 5 && CALCULATE ( MAX ( fact_environment[Kp Index] ) ) < 3 ) RETURN CALCULATE ( [Avg T1 (µs)], s )
+		formatString: #,0.0
+		displayFolder: Storm Sensitivity
+		lineageTag: cf531ea1-1036-4051-a434-0b128db0f651
+
+	measure 'Qubit T1 Storm Impact %' = DIVIDE ( [Avg T1 Storm Days (µs)] - [Avg T1 Quiet Days (µs)], [Avg T1 Quiet Days (µs)] )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Storm Sensitivity
+		lineageTag: bca7c956-ed0a-4889-9764-6bf0933342f3
+
+	measure 'Healthiest Backend' = VAR t = ADDCOLUMNS ( VALUES ( dim_backend[Backend] ), "@s", [Backend Health Index] ) RETURN MAXX ( TOPN ( 1, FILTER ( t, NOT ISBLANK ( [@s] ) ), [@s], DESC ), dim_backend[Backend] )
+		displayFolder: Insights
+		lineageTag: afc09c41-0f11-47d9-aa83-2fad64ac64a3
+
+	measure 'Most Variable Backend' = VAR t = ADDCOLUMNS ( VALUES ( dim_backend[Backend] ), "@s", [T1 Variability (CoV)] ) RETURN MAXX ( TOPN ( 1, FILTER ( t, NOT ISBLANK ( [@s] ) ), [@s], DESC ), dim_backend[Backend] )
+		displayFolder: Insights
+		lineageTag: 930b75d2-8f1e-4990-9ffa-37b0664afff2
+
+	measure 'T2/T1 Ratio' = DIVIDE ( [Avg T2 (µs)], [Avg T1 (µs)] )
+		formatString: 0.00
+		displayFolder: Coherence Physics
+		lineageTag: 2151706a-ebcf-4e6b-9f97-c631fc364293
+
+	measure 'T2 > 2×T1 Rows' = COUNTROWS ( FILTER ( fact_qubit_calibration, fact_qubit_calibration[T2 (µs)] > 2 * fact_qubit_calibration[T1 (µs)] ) )
+		formatString: #,0
+		displayFolder: Coherence Physics
+		lineageTag: 6374a65b-1fad-4736-b31a-2c54ab8c1622
+
+	measure 'T2 > 2×T1 Rate' = DIVIDE ( [T2 > 2×T1 Rows], [Calibration Rows] )
+		formatString: 0.0%
+		displayFolder: Coherence Physics
+		lineageTag: a1075cd5-17ae-49c9-a234-0a3122566603
+
+	measure 'Readout/Init Error Ratio' = DIVIDE ( [Avg Readout Error], [Avg Init Error] )
+		formatString: 0.0
+		displayFolder: Coherence Physics
+		lineageTag: e99243cb-7038-44ff-85b4-95b48186f3d9
+
+	measure 'Qubits per Backend-Day' = DIVIDE ( [Qubits Measured], DISTINCTCOUNT ( dim_date[Date] ) )
+		formatString: #,0.0
+		displayFolder: Coverage
+		lineageTag: da171fa8-88f3-4ed8-b681-c24b65d6c29c
+
+	column calibration_key
+		dataType: string
+		isHidden
+		lineageTag: 2fdce5d8-fc1c-4832-b1f9-3e5275c15767
+		summarizeBy: none
+		sourceColumn: calibration_key
+
+	column date_key
+		dataType: int64
+		isHidden
+		lineageTag: 3332a0ad-84c1-4c63-b4e1-0b62fc9da3f8
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column time_key
+		dataType: int64
+		isHidden
+		lineageTag: c0231e11-8b30-4316-ab80-ed523523baad
+		summarizeBy: none
+		sourceColumn: time_key
+
+	column backend_key
+		dataType: string
+		isHidden
+		lineageTag: fa9d6cf5-8d6b-4182-879e-1aee1614efc4
+		summarizeBy: none
+		sourceColumn: backend_key
+
+	column qubit_key
+		dataType: string
+		isHidden
+		lineageTag: 375ce24d-fc3f-4c08-bfd5-3364811875bf
+		summarizeBy: none
+		sourceColumn: qubit_key
+
+	column 'T1 (µs)'
+		dataType: double
+		formatString: #,0.0
+		lineageTag: f531993c-8da9-44e7-b469-fb9a262823ad
+		summarizeBy: sum
+		sourceColumn: t1_us
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'T2 (µs)'
+		dataType: double
+		formatString: #,0.0
+		lineageTag: abceb632-3ce7-4477-9617-1a752399ef00
+		summarizeBy: sum
+		sourceColumn: t2_us
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Readout Error'
+		dataType: double
+		formatString: 0.00%
+		lineageTag: 30e237b6-d2a3-471b-9d79-d51ad99a3e99
+		summarizeBy: sum
+		sourceColumn: readout_error
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Init Error'
+		dataType: double
+		formatString: 0.00%
+		lineageTag: 45d359c0-190b-4d18-9f82-a811cf8e1b2a
+		summarizeBy: sum
+		sourceColumn: init_error
+
+		annotation SummarizationSetBy = Automatic
+
+	column Operational
+		dataType: boolean
+		lineageTag: f8d3a1fd-376b-490c-bbae-72fc4d448324
+		summarizeBy: none
+		sourceColumn: operational
+
+	column source_file
+		dataType: string
+		isHidden
+		lineageTag: 5d8bb795-6876-4745-9fb1-101448ab4dac
+		summarizeBy: none
+		sourceColumn: source_file
+
+	column 'Silver Load Time'
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: e8908b78-1834-4c36-955a-74a82c9034b4
+		summarizeBy: none
+		sourceColumn: silver_load_timestamp
+
+		variation Variation
+			isDefault
+			relationship: 967a5641-87bc-47c5-8298-b889af935e4b
+			defaultHierarchy: LocalDateTable_43e0057c-c4a3-4822-a23f-fe964e4e34cf.'Date Hierarchy'
+
+	column 'T1 Bucket (µs)' = IF ( ISBLANK ( fact_qubit_calibration[T1 (µs)] ), BLANK (), FLOOR ( fact_qubit_calibration[T1 (µs)], 50 ) )
+		dataType: double
+		formatString: #,0
+		lineageTag: 3293fa86-7732-4d36-94db-233a1dd3aaf1
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'T2/T1 Ratio Bucket' = IF ( OR ( ISBLANK ( fact_qubit_calibration[T1 (µs)] ), ISBLANK ( fact_qubit_calibration[T2 (µs)] ), fact_qubit_calibration[T1 (µs)] <= 0 ), BLANK (), ROUND ( DIVIDE ( fact_qubit_calibration[T2 (µs)], fact_qubit_calibration[T1 (µs)] ) * 4, 0 ) / 4 )
+		dataType: double
+		formatString: 0.00
+		lineageTag: b7ab3cfc-3902-4122-8081-7bf2eb40897a
+		summarizeBy: sum
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_qubit_calibration = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "fact_qubit_calibration", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

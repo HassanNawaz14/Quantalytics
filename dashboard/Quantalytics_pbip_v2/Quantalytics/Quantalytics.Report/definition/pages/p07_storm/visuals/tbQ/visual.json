@@ -1,0 +1,120 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "tbQ",
+  "position": {
+    "x": 430,
+    "y": 488,
+    "z": 12000,
+    "height": 224,
+    "width": 470,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_qubit"
+                    }
+                  },
+                  "Property": "Qubit Label"
+                }
+              },
+              "queryRef": "dim_qubit.Qubit Label",
+              "nativeQueryRef": "Qubit Label",
+              "displayName": "Qubit"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_qubit_calibration"
+                    }
+                  },
+                  "Property": "Avg T1 Quiet Days (µs)"
+                }
+              },
+              "queryRef": "fact_qubit_calibration.Avg T1 Quiet Days (µs)",
+              "nativeQueryRef": "Avg T1 Quiet Days (µs)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_qubit_calibration"
+                    }
+                  },
+                  "Property": "Avg T1 Storm Days (µs)"
+                }
+              },
+              "queryRef": "fact_qubit_calibration.Avg T1 Storm Days (µs)",
+              "nativeQueryRef": "Avg T1 Storm Days (µs)"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_qubit_calibration"
+                    }
+                  },
+                  "Property": "Qubit T1 Storm Impact %"
+                }
+              },
+              "queryRef": "fact_qubit_calibration.Qubit T1 Storm Impact %",
+              "nativeQueryRef": "Qubit T1 Storm Impact %"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_qubit_calibration"
+                  }
+                },
+                "Property": "Qubit T1 Storm Impact %"
+              }
+            },
+            "direction": "Ascending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Qubits Most Sensitive to Storms (largest T1 drop first)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

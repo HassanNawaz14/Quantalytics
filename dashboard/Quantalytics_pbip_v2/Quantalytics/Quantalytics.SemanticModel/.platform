@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "Quantalytics"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "bc40a7e0-9e9b-41a2-8267-c98d893fe4c1"
+  }
+}

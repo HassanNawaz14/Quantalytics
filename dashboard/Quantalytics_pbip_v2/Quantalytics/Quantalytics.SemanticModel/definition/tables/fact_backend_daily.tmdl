@@ -1,0 +1,413 @@
+table fact_backend_daily
+	lineageTag: 0629bb08-357f-46c4-9e2f-d2f87cbf0b99
+
+	measure 'Daily Avg T1 (µs)' = AVERAGE ( fact_backend_daily[avg_t1_us] )
+		formatString: #,0.0
+		displayFolder: Daily
+		lineageTag: 3cb73d39-b647-4a1b-8e6c-67d613fb8c41
+
+	measure 'Daily Avg T2 (µs)' = AVERAGE ( fact_backend_daily[avg_t2_us] )
+		formatString: #,0.0
+		displayFolder: Daily
+		lineageTag: 1da7c35f-4c8c-4a25-8a68-d34e62368e91
+
+	measure 'Daily Avg Readout Error' = AVERAGE ( fact_backend_daily[avg_readout_error] )
+		formatString: 0.00%
+		displayFolder: Daily
+		lineageTag: dbb9288d-087d-4cb5-8124-65df085981ad
+
+	measure 'Daily Calibration Snapshots' = SUM ( fact_backend_daily[calibration_count] )
+		formatString: #,0
+		displayFolder: Daily
+		lineageTag: 1ae57fe4-623e-43af-9e03-1dcf2460dd71
+
+	measure 'Daily Avg Kp' = AVERAGE ( fact_backend_daily[avg_kp] )
+		formatString: 0.00
+		displayFolder: Space Weather
+		lineageTag: 61b6da97-4742-4984-8021-82dc663a010f
+
+	measure 'Daily Max Kp' = MAX ( fact_backend_daily[max_kp] )
+		formatString: 0.00
+		displayFolder: Space Weather
+		lineageTag: 53df223d-f859-44f3-95ee-0c6d244a7dd8
+
+	measure 'Daily Avg F10.7 (sfu)' = AVERAGE ( fact_backend_daily[avg_f107_solar_flux] )
+		formatString: #,0.0
+		displayFolder: Space Weather
+		lineageTag: b2580054-8030-4c2b-b24c-8b85ad1f27f8
+
+	measure 'Corr T1 vs Kp' = VAR tbl = FILTER ( fact_backend_daily, NOT ISBLANK ( fact_backend_daily[avg_t1_us] ) && NOT ISBLANK ( fact_backend_daily[avg_kp] ) ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, fact_backend_daily[avg_kp] ) VAR sy = SUMX ( tbl, fact_backend_daily[avg_t1_us] ) VAR sxy = SUMX ( tbl, fact_backend_daily[avg_kp] * fact_backend_daily[avg_t1_us] ) VAR sxx = SUMX ( tbl, fact_backend_daily[avg_kp] ^ 2 ) VAR syy = SUMX ( tbl, fact_backend_daily[avg_t1_us] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Correlation
+		lineageTag: 1b377519-1b09-4324-b31b-43ffe813426d
+
+	measure 'Corr T2 vs Kp' = VAR tbl = FILTER ( fact_backend_daily, NOT ISBLANK ( fact_backend_daily[avg_t2_us] ) && NOT ISBLANK ( fact_backend_daily[avg_kp] ) ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, fact_backend_daily[avg_kp] ) VAR sy = SUMX ( tbl, fact_backend_daily[avg_t2_us] ) VAR sxy = SUMX ( tbl, fact_backend_daily[avg_kp] * fact_backend_daily[avg_t2_us] ) VAR sxx = SUMX ( tbl, fact_backend_daily[avg_kp] ^ 2 ) VAR syy = SUMX ( tbl, fact_backend_daily[avg_t2_us] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Correlation
+		lineageTag: f4c46a7e-422d-4976-aac3-d85374411acc
+
+	measure 'Corr Readout Error vs Kp' = VAR tbl = FILTER ( fact_backend_daily, NOT ISBLANK ( fact_backend_daily[avg_readout_error] ) && NOT ISBLANK ( fact_backend_daily[avg_kp] ) ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, fact_backend_daily[avg_kp] ) VAR sy = SUMX ( tbl, fact_backend_daily[avg_readout_error] ) VAR sxy = SUMX ( tbl, fact_backend_daily[avg_kp] * fact_backend_daily[avg_readout_error] ) VAR sxx = SUMX ( tbl, fact_backend_daily[avg_kp] ^ 2 ) VAR syy = SUMX ( tbl, fact_backend_daily[avg_readout_error] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Correlation
+		lineageTag: 786d7dc9-cfba-444b-a4e5-bcb49bddd154
+
+	measure 'Corr T1 vs F10.7' = VAR tbl = FILTER ( fact_backend_daily, NOT ISBLANK ( fact_backend_daily[avg_t1_us] ) && NOT ISBLANK ( fact_backend_daily[avg_f107_solar_flux] ) ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, fact_backend_daily[avg_f107_solar_flux] ) VAR sy = SUMX ( tbl, fact_backend_daily[avg_t1_us] ) VAR sxy = SUMX ( tbl, fact_backend_daily[avg_f107_solar_flux] * fact_backend_daily[avg_t1_us] ) VAR sxx = SUMX ( tbl, fact_backend_daily[avg_f107_solar_flux] ^ 2 ) VAR syy = SUMX ( tbl, fact_backend_daily[avg_t1_us] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Correlation
+		lineageTag: c2cae6f8-b8e1-4526-9604-7465cf6313d2
+
+	measure 'Correlation Strength' = VAR r = ABS ( [Corr T1 vs Kp] ) RETURN SWITCH ( TRUE (), ISBLANK ( r ), "n/a", r < 0.2, "Negligible", r < 0.4, "Weak", r < 0.6, "Moderate", "Strong" )
+		displayFolder: Correlation
+		lineageTag: 697f8c9b-5d3a-41b8-9feb-510cbac4c5c4
+
+	measure Backend-Days = COUNTROWS ( fact_backend_daily )
+		formatString: #,0
+		displayFolder: Daily
+		lineageTag: 49d890e9-cc80-40df-8d4b-a7988cc73187
+
+	measure 'Corr Readout Error vs F10.7' = VAR tbl = FILTER ( fact_backend_daily, NOT ISBLANK ( fact_backend_daily[avg_readout_error] ) && NOT ISBLANK ( fact_backend_daily[avg_f107_solar_flux] ) ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, fact_backend_daily[avg_f107_solar_flux] ) VAR sy = SUMX ( tbl, fact_backend_daily[avg_readout_error] ) VAR sxy = SUMX ( tbl, fact_backend_daily[avg_f107_solar_flux] * fact_backend_daily[avg_readout_error] ) VAR sxx = SUMX ( tbl, fact_backend_daily[avg_f107_solar_flux] ^ 2 ) VAR syy = SUMX ( tbl, fact_backend_daily[avg_readout_error] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		displayFolder: Correlation
+		lineageTag: 93a85e07-bee7-4d90-bd3d-b26941422169
+
+		annotation PBI_FormatHint = {"isGeneralNumber":true}
+
+	measure 'T1 Storm Days (µs)' = CALCULATE ( [Daily Avg T1 (µs)], fact_backend_daily[Kp Band] = "Storm (Kp ≥ 5)" )
+		formatString: #,0.0
+		displayFolder: Storm vs Quiet
+		lineageTag: 8f40b6de-e60e-4dba-b8f1-42eb664e2c69
+
+	measure 'T1 Quiet Days (µs)' = CALCULATE ( [Daily Avg T1 (µs)], fact_backend_daily[Kp Band] = "Quiet (Kp < 3)" )
+		formatString: #,0.0
+		displayFolder: Storm vs Quiet
+		lineageTag: 17a04d33-3e70-4158-8061-0fb9c44fff47
+
+	measure 'T1 Storm Impact %' = DIVIDE ( [T1 Storm Days (µs)] - [T1 Quiet Days (µs)], [T1 Quiet Days (µs)] )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Storm vs Quiet
+		lineageTag: 42ae5315-3236-4bd1-ac4c-fd3b5c91d224
+
+	measure 'T2 Storm Impact %' = DIVIDE ( CALCULATE ( [Daily Avg T2 (µs)], fact_backend_daily[Kp Band] = "Storm (Kp ≥ 5)" ) - CALCULATE ( [Daily Avg T2 (µs)], fact_backend_daily[Kp Band] = "Quiet (Kp < 3)" ), CALCULATE ( [Daily Avg T2 (µs)], fact_backend_daily[Kp Band] = "Quiet (Kp < 3)" ) )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Storm vs Quiet
+		lineageTag: 60d80397-1dcf-42a0-bb86-4529dbe94380
+
+	measure 'Readout Storm Impact %' = DIVIDE ( CALCULATE ( [Daily Avg Readout Error], fact_backend_daily[Kp Band] = "Storm (Kp ≥ 5)" ) - CALCULATE ( [Daily Avg Readout Error], fact_backend_daily[Kp Band] = "Quiet (Kp < 3)" ), CALCULATE ( [Daily Avg Readout Error], fact_backend_daily[Kp Band] = "Quiet (Kp < 3)" ) )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Storm vs Quiet
+		lineageTag: 1567feeb-01b0-42dc-a54f-d84189b4402d
+
+	measure 'Most Storm-Sensitive Backend' = VAR t = ADDCOLUMNS ( VALUES ( dim_backend[Backend] ), "@s", ABS ( [T1 Storm Impact %] ) ) RETURN MAXX ( TOPN ( 1, FILTER ( t, NOT ISBLANK ( [@s] ) ), [@s], DESC ), dim_backend[Backend] )
+		displayFolder: Insights
+		lineageTag: b93baac4-1b31-4123-bbc9-a985f159a991
+
+	measure 'T1 Δ Day -3' = VAR s = FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( MAX ( fact_environment[Kp Index] ) ) >= 5 ) VAR shifted = SELECTCOLUMNS ( s, "d", dim_date[Date] + (-3) ) VAR v = CALCULATE ( [Daily Avg T1 (µs)], TREATAS ( shifted, dim_date[Date] ) ) VAR base = CALCULATE ( [Daily Avg T1 (µs)], ALLSELECTED ( dim_date ) ) RETURN IF ( ISBLANK ( v ), BLANK (), DIVIDE ( v, base ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Event Study
+		lineageTag: 765dda51-0f06-4590-8bb3-94ef01c6588b
+
+	measure 'T1 Δ Day -2' = VAR s = FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( MAX ( fact_environment[Kp Index] ) ) >= 5 ) VAR shifted = SELECTCOLUMNS ( s, "d", dim_date[Date] + (-2) ) VAR v = CALCULATE ( [Daily Avg T1 (µs)], TREATAS ( shifted, dim_date[Date] ) ) VAR base = CALCULATE ( [Daily Avg T1 (µs)], ALLSELECTED ( dim_date ) ) RETURN IF ( ISBLANK ( v ), BLANK (), DIVIDE ( v, base ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Event Study
+		lineageTag: 7fe6bf1e-a9bb-4652-ad1d-2a769f691c79
+
+	measure 'T1 Δ Day -1' = VAR s = FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( MAX ( fact_environment[Kp Index] ) ) >= 5 ) VAR shifted = SELECTCOLUMNS ( s, "d", dim_date[Date] + (-1) ) VAR v = CALCULATE ( [Daily Avg T1 (µs)], TREATAS ( shifted, dim_date[Date] ) ) VAR base = CALCULATE ( [Daily Avg T1 (µs)], ALLSELECTED ( dim_date ) ) RETURN IF ( ISBLANK ( v ), BLANK (), DIVIDE ( v, base ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Event Study
+		lineageTag: 6ae36f26-c277-431e-aff3-ea800393aa8b
+
+	measure 'T1 Δ Storm day' = VAR s = FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( MAX ( fact_environment[Kp Index] ) ) >= 5 ) VAR shifted = SELECTCOLUMNS ( s, "d", dim_date[Date] + (0) ) VAR v = CALCULATE ( [Daily Avg T1 (µs)], TREATAS ( shifted, dim_date[Date] ) ) VAR base = CALCULATE ( [Daily Avg T1 (µs)], ALLSELECTED ( dim_date ) ) RETURN IF ( ISBLANK ( v ), BLANK (), DIVIDE ( v, base ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Event Study
+		lineageTag: a8046e72-fcfe-450e-8468-6e8c1e81a1c3
+
+	measure 'T1 Δ Day +1' = VAR s = FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( MAX ( fact_environment[Kp Index] ) ) >= 5 ) VAR shifted = SELECTCOLUMNS ( s, "d", dim_date[Date] + (1) ) VAR v = CALCULATE ( [Daily Avg T1 (µs)], TREATAS ( shifted, dim_date[Date] ) ) VAR base = CALCULATE ( [Daily Avg T1 (µs)], ALLSELECTED ( dim_date ) ) RETURN IF ( ISBLANK ( v ), BLANK (), DIVIDE ( v, base ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Event Study
+		lineageTag: 18ba118b-f79b-48f1-a3ca-9eef63a600fd
+
+	measure 'T1 Δ Day +2' = VAR s = FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( MAX ( fact_environment[Kp Index] ) ) >= 5 ) VAR shifted = SELECTCOLUMNS ( s, "d", dim_date[Date] + (2) ) VAR v = CALCULATE ( [Daily Avg T1 (µs)], TREATAS ( shifted, dim_date[Date] ) ) VAR base = CALCULATE ( [Daily Avg T1 (µs)], ALLSELECTED ( dim_date ) ) RETURN IF ( ISBLANK ( v ), BLANK (), DIVIDE ( v, base ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Event Study
+		lineageTag: 917099a0-8812-48b5-ab64-3711f473f65a
+
+	measure 'T1 Δ Day +3' = VAR s = FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( MAX ( fact_environment[Kp Index] ) ) >= 5 ) VAR shifted = SELECTCOLUMNS ( s, "d", dim_date[Date] + (3) ) VAR v = CALCULATE ( [Daily Avg T1 (µs)], TREATAS ( shifted, dim_date[Date] ) ) VAR base = CALCULATE ( [Daily Avg T1 (µs)], ALLSELECTED ( dim_date ) ) RETURN IF ( ISBLANK ( v ), BLANK (), DIVIDE ( v, base ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: Event Study
+		lineageTag: a10dee24-9e6d-4778-a42c-7dd51dc42068
+
+	measure 'r T1 vs Kp · lag 0d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 0d)] ) && NOT ISBLANK ( [Daily Avg T1 (µs)] ) ), "@x", [Avg Kp (lag 0d)], "@y", [Daily Avg T1 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: e7efdf0b-600c-458e-b772-195dcee50b94
+
+	measure 'r T1 vs Kp · lag 1d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 1d)] ) && NOT ISBLANK ( [Daily Avg T1 (µs)] ) ), "@x", [Avg Kp (lag 1d)], "@y", [Daily Avg T1 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: ee13a61f-5ba9-4a49-8947-5c199ab79b93
+
+	measure 'r T1 vs Kp · lag 2d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 2d)] ) && NOT ISBLANK ( [Daily Avg T1 (µs)] ) ), "@x", [Avg Kp (lag 2d)], "@y", [Daily Avg T1 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 87ff842c-bb34-41f3-8bc0-66038c3721ca
+
+	measure 'r T1 vs Kp · lag 3d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 3d)] ) && NOT ISBLANK ( [Daily Avg T1 (µs)] ) ), "@x", [Avg Kp (lag 3d)], "@y", [Daily Avg T1 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 7fc7fbdb-3fc9-4f40-999c-9ec30dae8fce
+
+	measure 'r T1 vs Kp · lag 5d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 5d)] ) && NOT ISBLANK ( [Daily Avg T1 (µs)] ) ), "@x", [Avg Kp (lag 5d)], "@y", [Daily Avg T1 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 872d0257-3c05-48ba-99a1-eecfd84b377e
+
+	measure 'r T1 vs Kp · lag 7d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 7d)] ) && NOT ISBLANK ( [Daily Avg T1 (µs)] ) ), "@x", [Avg Kp (lag 7d)], "@y", [Daily Avg T1 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 74fccc1d-b542-4808-bf60-73a1db6e4f32
+
+	measure 'r T2 vs Kp · lag 0d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 0d)] ) && NOT ISBLANK ( [Daily Avg T2 (µs)] ) ), "@x", [Avg Kp (lag 0d)], "@y", [Daily Avg T2 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: bdc72f0d-4085-4370-9d90-5cadd070299d
+
+	measure 'r T2 vs Kp · lag 1d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 1d)] ) && NOT ISBLANK ( [Daily Avg T2 (µs)] ) ), "@x", [Avg Kp (lag 1d)], "@y", [Daily Avg T2 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 94726b6f-045a-42e0-b555-850aac265a4b
+
+	measure 'r T2 vs Kp · lag 2d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 2d)] ) && NOT ISBLANK ( [Daily Avg T2 (µs)] ) ), "@x", [Avg Kp (lag 2d)], "@y", [Daily Avg T2 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: d2daf291-da8c-4e75-a48f-65bcd7a02057
+
+	measure 'r T2 vs Kp · lag 3d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 3d)] ) && NOT ISBLANK ( [Daily Avg T2 (µs)] ) ), "@x", [Avg Kp (lag 3d)], "@y", [Daily Avg T2 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: ca33888d-a196-43bb-94a2-bfcb65eb138d
+
+	measure 'r T2 vs Kp · lag 5d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 5d)] ) && NOT ISBLANK ( [Daily Avg T2 (µs)] ) ), "@x", [Avg Kp (lag 5d)], "@y", [Daily Avg T2 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: acdf2a94-5b5d-4539-8a97-ce4ed9115bb0
+
+	measure 'r T2 vs Kp · lag 7d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 7d)] ) && NOT ISBLANK ( [Daily Avg T2 (µs)] ) ), "@x", [Avg Kp (lag 7d)], "@y", [Daily Avg T2 (µs)] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: fa1686d3-0745-419b-8435-153d2c657806
+
+	measure 'r Readout vs Kp · lag 0d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 0d)] ) && NOT ISBLANK ( [Daily Avg Readout Error] ) ), "@x", [Avg Kp (lag 0d)], "@y", [Daily Avg Readout Error] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 4e3ee204-aa88-4a0f-8583-94cdf10c2231
+
+	measure 'r Readout vs Kp · lag 1d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 1d)] ) && NOT ISBLANK ( [Daily Avg Readout Error] ) ), "@x", [Avg Kp (lag 1d)], "@y", [Daily Avg Readout Error] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 028cb0a3-372c-456f-bd0f-42cc91ab219b
+
+	measure 'r Readout vs Kp · lag 2d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 2d)] ) && NOT ISBLANK ( [Daily Avg Readout Error] ) ), "@x", [Avg Kp (lag 2d)], "@y", [Daily Avg Readout Error] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: c550e9ed-614c-4074-8fff-b7526082d13e
+
+	measure 'r Readout vs Kp · lag 3d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 3d)] ) && NOT ISBLANK ( [Daily Avg Readout Error] ) ), "@x", [Avg Kp (lag 3d)], "@y", [Daily Avg Readout Error] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 66976a1b-eca7-4c80-a4e4-b53bca694a9d
+
+	measure 'r Readout vs Kp · lag 5d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 5d)] ) && NOT ISBLANK ( [Daily Avg Readout Error] ) ), "@x", [Avg Kp (lag 5d)], "@y", [Daily Avg Readout Error] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 1a11813c-3698-4ce3-85e9-f12ec611bc32
+
+	measure 'r Readout vs Kp · lag 7d' = VAR tbl = ADDCOLUMNS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( [Avg Kp (lag 7d)] ) && NOT ISBLANK ( [Daily Avg Readout Error] ) ), "@x", [Avg Kp (lag 7d)], "@y", [Daily Avg Readout Error] ) VAR n = COUNTROWS ( tbl ) VAR sx = SUMX ( tbl, [@x] ) VAR sy = SUMX ( tbl, [@y] ) VAR sxy = SUMX ( tbl, [@x] * [@y] ) VAR sxx = SUMX ( tbl, [@x] ^ 2 ) VAR syy = SUMX ( tbl, [@y] ^ 2 ) VAR den = SQRT ( ( n * sxx - sx ^ 2 ) * ( n * syy - sy ^ 2 ) ) RETURN IF ( n >= 5 && den > 0, DIVIDE ( n * sxy - sx * sy, den ) )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: abd897fc-4506-406f-bc4e-098eddabf863
+
+	measure 'Strongest T1~Kp r' = VAR r = MAX ( MAX ( MAX ( ABS ( [r T1 vs Kp · lag 0d] ), ABS ( [r T1 vs Kp · lag 1d] ) ), MAX ( ABS ( [r T1 vs Kp · lag 2d] ), ABS ( [r T1 vs Kp · lag 3d] ) ) ), MAX ( ABS ( [r T1 vs Kp · lag 5d] ), ABS ( [r T1 vs Kp · lag 7d] ) ) ) RETURN IF ( r = 0, BLANK (), r )
+		formatString: 0.00
+		displayFolder: Lag Correlation
+		lineageTag: 3eb0dca2-bed2-4c5e-90dc-e048994eb70f
+
+	measure 'Strongest T1~Kp Lag (days)' = IF ( ISBLANK ( [Strongest T1~Kp r] ), BLANK (), SWITCH ( TRUE (), ABS ( [r T1 vs Kp · lag 0d] ) = [Strongest T1~Kp r], 0, ABS ( [r T1 vs Kp · lag 1d] ) = [Strongest T1~Kp r], 1, ABS ( [r T1 vs Kp · lag 2d] ) = [Strongest T1~Kp r], 2, ABS ( [r T1 vs Kp · lag 3d] ) = [Strongest T1~Kp r], 3, ABS ( [r T1 vs Kp · lag 5d] ) = [Strongest T1~Kp r], 5, ABS ( [r T1 vs Kp · lag 7d] ) = [Strongest T1~Kp r], 7 ) )
+		formatString: 0
+		displayFolder: Lag Correlation
+		lineageTag: 10d8bb09-2444-4f16-9fe9-8ea768b8c1d4
+
+	measure 'Calendar Days' = COUNTROWS ( dim_date )
+		formatString: #,0
+		displayFolder: Coverage
+		lineageTag: 6b5c0879-5f03-47ea-bc68-e11b700cc62e
+
+	measure 'Data Coverage %' = DIVIDE ( [Backend-Days], [Calendar Days] * DISTINCTCOUNT ( fact_backend_daily[backend_key] ) )
+		formatString: 0.0%
+		displayFolder: Coverage
+		lineageTag: 13bae9d9-6a8d-474a-ab73-bf26be5065a8
+
+	measure 'First Calibration Date' = MINX ( fact_backend_daily, RELATED ( dim_date[Date] ) )
+		formatString: yyyy-mm-dd
+		displayFolder: Coverage
+		lineageTag: 4d43b269-5478-4f8e-a297-45dda50f3769
+
+	measure 'Last Calibration Date' = MAXX ( fact_backend_daily, RELATED ( dim_date[Date] ) )
+		formatString: yyyy-mm-dd
+		displayFolder: Coverage
+		lineageTag: cc3f5a2e-9edf-42ec-8952-9545f78f0e27
+
+	column backend_daily_key
+		dataType: string
+		isHidden
+		lineageTag: 597076b0-7b4a-4573-ba6b-16052f677730
+		summarizeBy: none
+		sourceColumn: backend_daily_key
+
+	column date_key
+		dataType: int64
+		isHidden
+		lineageTag: 299a0749-389d-4cc2-8e16-fdfeea4ff4fa
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column backend_key
+		dataType: string
+		isHidden
+		lineageTag: ce238666-b940-4073-afea-4f708b5604ff
+		summarizeBy: none
+		sourceColumn: backend_key
+
+	column calibration_count
+		dataType: int64
+		isHidden
+		lineageTag: 3dcbeb11-6e0d-4316-9035-9586c07f27e7
+		summarizeBy: none
+		sourceColumn: calibration_count
+
+	column qubit_count
+		dataType: int64
+		isHidden
+		lineageTag: 919153cc-c3b2-4fc5-9950-6b37d3b103fd
+		summarizeBy: none
+		sourceColumn: qubit_count
+
+	column avg_t1_us
+		dataType: double
+		isHidden
+		lineageTag: 291a6324-3194-43ff-a412-92cef8fdb46d
+		summarizeBy: none
+		sourceColumn: avg_t1_us
+
+	column min_t1_us
+		dataType: double
+		isHidden
+		lineageTag: b4860f74-00f3-4721-99a3-778c5eb690fe
+		summarizeBy: none
+		sourceColumn: min_t1_us
+
+	column max_t1_us
+		dataType: double
+		isHidden
+		lineageTag: 1fa50733-7b18-4bac-9624-5cf8b5fb80fa
+		summarizeBy: none
+		sourceColumn: max_t1_us
+
+	column avg_t2_us
+		dataType: double
+		isHidden
+		lineageTag: 976d7e4e-67c3-4265-85e6-0abea6b67aae
+		summarizeBy: none
+		sourceColumn: avg_t2_us
+
+	column min_t2_us
+		dataType: double
+		isHidden
+		lineageTag: df1f10c9-51e8-4e16-82b1-19ccbc0a7d62
+		summarizeBy: none
+		sourceColumn: min_t2_us
+
+	column max_t2_us
+		dataType: double
+		isHidden
+		lineageTag: 1e8ef532-d4fa-43aa-b7a1-2cbeb2fddfb8
+		summarizeBy: none
+		sourceColumn: max_t2_us
+
+	column avg_readout_error
+		dataType: double
+		isHidden
+		lineageTag: b5d10c65-c2af-4d98-a3c5-60c5f9dce478
+		summarizeBy: none
+		sourceColumn: avg_readout_error
+
+	column avg_init_error
+		dataType: double
+		isHidden
+		lineageTag: 9e48957a-cc56-4b14-9b9e-b4e8f7f742ff
+		summarizeBy: none
+		sourceColumn: avg_init_error
+
+	column operational_measurement_pct
+		dataType: double
+		isHidden
+		lineageTag: 9310975d-7771-4792-b453-00df4b5b101e
+		summarizeBy: none
+		sourceColumn: operational_measurement_pct
+
+	column avg_kp
+		dataType: double
+		isHidden
+		lineageTag: 0a61bfb1-8850-4c22-b6ab-9e6e3718f8e3
+		summarizeBy: none
+		sourceColumn: avg_kp
+
+	column max_kp
+		dataType: double
+		isHidden
+		lineageTag: e4b9b3bd-e96f-4afb-8e4a-8ac2b4c57deb
+		summarizeBy: none
+		sourceColumn: max_kp
+
+	column avg_f107_solar_flux
+		dataType: double
+		isHidden
+		lineageTag: 51918e3b-1ce7-4858-ab2a-246497a0c613
+		summarizeBy: none
+		sourceColumn: avg_f107_solar_flux
+
+	column 'Kp Band' = SWITCH ( TRUE (), ISBLANK ( fact_backend_daily[max_kp] ), "No Kp data", fact_backend_daily[max_kp] < 3, "Quiet (Kp < 3)", fact_backend_daily[max_kp] < 5, "Unsettled (Kp 3-5)", "Storm (Kp ≥ 5)" )
+		dataType: string
+		lineageTag: c10d01ad-61a5-47d7-b4aa-2352fb5d1d9e
+		summarizeBy: none
+		sortByColumn: 'Kp Band Order'
+
+	column 'Kp Band Order' = SWITCH ( TRUE (), ISBLANK ( fact_backend_daily[max_kp] ), 4, fact_backend_daily[max_kp] < 3, 1, fact_backend_daily[max_kp] < 5, 2, 3 )
+		dataType: int64
+		formatString: 0
+		lineageTag: 5615f1cb-50d5-4a21-8e89-8251a1fce2e2
+		summarizeBy: none
+
+	column 'F10.7 Band' = SWITCH ( TRUE (), ISBLANK ( fact_backend_daily[avg_f107_solar_flux] ), "No F10.7 data", fact_backend_daily[avg_f107_solar_flux] < 100, "Low (< 100 sfu)", fact_backend_daily[avg_f107_solar_flux] < 150, "Moderate (100-150)", fact_backend_daily[avg_f107_solar_flux] < 200, "High (150-200)", "Very high (≥ 200)" )
+		dataType: string
+		lineageTag: bf47e652-ad20-4307-8cb9-421018cb7032
+		summarizeBy: none
+		sortByColumn: 'F10.7 Band Order'
+
+	column 'F10.7 Band Order' = SWITCH ( TRUE (), ISBLANK ( fact_backend_daily[avg_f107_solar_flux] ), 5, fact_backend_daily[avg_f107_solar_flux] < 100, 1, fact_backend_daily[avg_f107_solar_flux] < 150, 2, fact_backend_daily[avg_f107_solar_flux] < 200, 3, 4 )
+		dataType: int64
+		formatString: 0
+		lineageTag: f393bd54-8e7e-48d5-bf6c-8154c937a14d
+		summarizeBy: none
+
+	partition fact_backend_daily = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "fact_backend_daily", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

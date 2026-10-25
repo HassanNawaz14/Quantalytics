@@ -1,0 +1,65 @@
+table dim_qubit
+	lineageTag: c17fd860-0ad6-4bd2-b84d-082adbe061e8
+
+	column qubit_key
+		dataType: string
+		isHidden
+		lineageTag: 975b6412-ede5-4182-bd40-8e9634afffd1
+		summarizeBy: none
+		sourceColumn: qubit_key
+
+	column backend_key
+		dataType: string
+		isHidden
+		lineageTag: a00fc399-2017-47d5-8122-414e12c5d85d
+		summarizeBy: none
+		sourceColumn: backend_key
+
+	column Qubit
+		dataType: int64
+		lineageTag: 8331061b-5b05-4b4b-af36-1550e4722bdc
+		summarizeBy: sum
+		sourceColumn: qubit_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'First Seen'
+		dataType: dateTime
+		lineageTag: cc208590-8658-44f1-90d3-a8911fd821e8
+		summarizeBy: none
+		sourceColumn: first_seen
+
+		variation Variation
+			isDefault
+			relationship: 5487db2f-d326-4ec4-b14f-a5797cf8e497
+			defaultHierarchy: LocalDateTable_7391dc18-80dc-4b31-be2b-8d7a997f6662.'Date Hierarchy'
+
+	column 'Last Seen'
+		dataType: dateTime
+		lineageTag: 78f7fa96-f309-4b65-8739-95b8d9ec647f
+		summarizeBy: none
+		sourceColumn: last_seen
+
+		variation Variation
+			isDefault
+			relationship: ad8572a8-3ffd-44f6-84a6-d9fc15588f22
+			defaultHierarchy: LocalDateTable_13b0df70-a447-4982-9ee2-4117acc1f7dc.'Date Hierarchy'
+
+	column 'Qubit Label' = RELATED ( dim_backend[Backend] ) & " · Q" & FORMAT ( dim_qubit[Qubit], "000" )
+		dataType: string
+		lineageTag: 83912de4-5ef4-420e-a11b-a2cac67064ea
+		summarizeBy: none
+
+	partition dim_qubit = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "dim_qubit", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

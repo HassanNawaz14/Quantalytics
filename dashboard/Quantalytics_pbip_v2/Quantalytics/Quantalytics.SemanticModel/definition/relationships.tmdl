@@ -1,0 +1,121 @@
+relationship 7fe7a83d-9d27-4034-9219-939b12a5005e
+	fromColumn: fact_qubit_calibration.date_key
+	toColumn: dim_date.date_key
+
+relationship 5439cfce-bf6d-489f-a21a-a52a814da2f6
+	fromColumn: fact_qubit_calibration.time_key
+	toColumn: dim_time.time_key
+
+relationship b810ba82-c89a-4cdf-b248-6795b88a1fa8
+	fromColumn: fact_qubit_calibration.qubit_key
+	toColumn: dim_qubit.qubit_key
+
+relationship 1e691024-1203-4b92-8edc-236d69424308
+	fromColumn: dim_qubit.backend_key
+	toColumn: dim_backend.backend_key
+
+relationship f0cccb44-538e-4512-930a-2ac19d3b29f4
+	fromColumn: fact_environment.date_key
+	toColumn: dim_date.date_key
+
+relationship 2ef0c601-464f-4fe6-8cdc-d19fcf64931b
+	fromColumn: fact_environment.time_key
+	toColumn: dim_time.time_key
+
+relationship f602bc36-dd35-4e03-8ed1-8153b334828e
+	fromColumn: fact_environment.observation_type_key
+	toColumn: dim_observation_type.observation_type_key
+
+relationship 48633967-2d7c-4303-a262-e71294f3ee00
+	fromColumn: fact_backend_daily.date_key
+	toColumn: dim_date.date_key
+
+relationship bec3891b-5468-4545-8c8b-3291c38e0968
+	fromColumn: fact_backend_daily.backend_key
+	toColumn: dim_backend.backend_key
+
+relationship 480495f8-c96d-4b4d-b3fd-2ad367a99d9e
+	fromColumn: fact_pipeline_run.date_key
+	toColumn: dim_date.date_key
+
+relationship c7a21ef5-190f-4bbe-a56d-da88eafb2dfb
+	fromColumn: fact_pipeline_run.time_key
+	toColumn: dim_time.time_key
+
+relationship 3e746ae6-3053-4f9b-8f03-74ac28e56ff3
+	fromColumn: fact_pipeline_run.stage_key
+	toColumn: dim_stage.stage_key
+
+relationship 115ae2b3-d27e-4a5b-b2b9-c43de8981ec0
+	fromColumn: fact_pipeline_run.dataset_key
+	toColumn: dim_dataset.dataset_key
+
+relationship 603bdb90-eb86-448d-b75a-baa6181c982a
+	fromColumn: fact_pipeline_run.mode_key
+	toColumn: dim_mode.mode_key
+
+relationship 03624682-ebd5-4a84-9d73-0c2fc3785857
+	fromColumn: fact_pipeline_run.status_key
+	toColumn: dim_status.status_key
+
+relationship ae2d5fc6-0b73-4176-b941-a9483eadf057
+	fromColumn: fact_quarantine.date_key
+	toColumn: dim_date.date_key
+
+relationship 856bd894-b956-463f-a7ac-633fd1a9cbac
+	fromColumn: fact_quarantine.time_key
+	toColumn: dim_time.time_key
+
+relationship f9611803-9af9-4d88-b53e-6a24b84a96a4
+	fromColumn: fact_quarantine.dataset_key
+	toColumn: dim_dataset.dataset_key
+
+relationship db23c73c-9d95-47f8-9cfc-bd1c26eab3b5
+	fromColumn: fact_quarantine.error_reason_key
+	toColumn: dim_error_reason.error_reason_key
+
+relationship 0ea7f2fc-6abd-488c-b822-047b52202902
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_backend.'First Seen'
+	toColumn: LocalDateTable_33ab3d36-4c6d-44d2-b6ec-dca65f41c907.Date
+
+relationship ee610c53-c11e-493c-89ee-17d239dee42f
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_backend.'Last Seen'
+	toColumn: LocalDateTable_83fadb32-1383-4d0d-ab72-efc42c4a12dd.Date
+
+relationship 5487db2f-d326-4ec4-b14f-a5797cf8e497
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_qubit.'First Seen'
+	toColumn: LocalDateTable_7391dc18-80dc-4b31-be2b-8d7a997f6662.Date
+
+relationship ad8572a8-3ffd-44f6-84a6-d9fc15588f22
+	joinOnDateBehavior: datePartOnly
+	fromColumn: dim_qubit.'Last Seen'
+	toColumn: LocalDateTable_13b0df70-a447-4982-9ee2-4117acc1f7dc.Date
+
+relationship 967a5641-87bc-47c5-8298-b889af935e4b
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fact_qubit_calibration.'Silver Load Time'
+	toColumn: LocalDateTable_43e0057c-c4a3-4822-a23f-fe964e4e34cf.Date
+
+relationship 1faec50d-acad-434e-b12c-076b8dc769e3
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fact_environment.'Silver Load Time'
+	toColumn: LocalDateTable_57dfdde9-34fa-40e9-b1e7-851630c2a43d.Date
+
+relationship 82fa0ab9-9b99-4e96-90f5-a52e24b8c13d
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fact_pipeline_run.'Started At'
+	toColumn: LocalDateTable_1c90fb48-ac2e-4a99-bb44-7885dec75e72.Date
+
+relationship b03a885f-e7e9-4716-9fbf-39b36120792c
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fact_pipeline_run.'Finished At'
+	toColumn: LocalDateTable_c234f4b8-83fd-4c56-88ef-35d7f6cd861b.Date
+
+relationship 9147314c-3729-43ab-8e68-81b6416bae70
+	joinOnDateBehavior: datePartOnly
+	fromColumn: fact_quarantine.'Quarantined At'
+	toColumn: LocalDateTable_a91580db-3cb2-43f9-807b-1bbd00753691.Date
+

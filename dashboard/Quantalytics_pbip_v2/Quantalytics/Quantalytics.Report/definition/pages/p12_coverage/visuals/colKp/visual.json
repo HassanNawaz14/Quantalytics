@@ -1,0 +1,94 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "colKp",
+  "position": {
+    "x": 860,
+    "y": 238,
+    "z": 12000,
+    "height": 240,
+    "width": 400,
+    "tabOrder": 12000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_date"
+                    }
+                  },
+                  "Property": "Year-Month"
+                }
+              },
+              "queryRef": "dim_date.Year-Month",
+              "nativeQueryRef": "Year-Month",
+              "active": true,
+              "displayName": "Year-Month"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_environment"
+                    }
+                  },
+                  "Property": "Kp Coverage %"
+                }
+              },
+              "queryRef": "fact_environment.Kp Coverage %",
+              "nativeQueryRef": "Kp Coverage %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_environment"
+                    }
+                  },
+                  "Property": "F10.7 Coverage %"
+                }
+              },
+              "queryRef": "fact_environment.F10.7 Coverage %",
+              "nativeQueryRef": "F10.7 Coverage %"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Space-Weather Coverage by Month'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

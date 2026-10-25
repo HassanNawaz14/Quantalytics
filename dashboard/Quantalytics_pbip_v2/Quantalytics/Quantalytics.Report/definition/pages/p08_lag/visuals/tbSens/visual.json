@@ -1,0 +1,117 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "tbSens",
+  "position": {
+    "x": 840,
+    "y": 484,
+    "z": 13000,
+    "height": 228,
+    "width": 420,
+    "tabOrder": 13000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_backend"
+                    }
+                  },
+                  "Property": "Backend"
+                }
+              },
+              "queryRef": "dim_backend.Backend",
+              "nativeQueryRef": "Backend",
+              "displayName": "Backend"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "T1 Storm Impact %"
+                }
+              },
+              "queryRef": "fact_backend_daily.T1 Storm Impact %",
+              "nativeQueryRef": "T1 Storm Impact %"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Corr T1 vs Kp"
+                }
+              },
+              "queryRef": "fact_backend_daily.Corr T1 vs Kp",
+              "nativeQueryRef": "Corr T1 vs Kp"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Corr T2 vs Kp"
+                }
+              },
+              "queryRef": "fact_backend_daily.Corr T2 vs Kp",
+              "nativeQueryRef": "Corr T2 vs Kp"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Corr Readout Error vs Kp"
+                }
+              },
+              "queryRef": "fact_backend_daily.Corr Readout Error vs Kp",
+              "nativeQueryRef": "Corr Readout Error vs Kp"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Backend Space-Weather Sensitivity'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

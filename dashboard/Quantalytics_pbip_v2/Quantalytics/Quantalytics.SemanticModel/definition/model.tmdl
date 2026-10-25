@@ -1,0 +1,42 @@
+model Model
+	culture: en-US
+	defaultPowerBIDataSourceVersion: powerBI_V3
+	sourceQueryCulture: en-US
+	dataAccessOptions
+		legacyRedirects
+		returnErrorValuesAsNull
+
+annotation PBI_QueryOrder = ["dim_date","dim_time","dim_backend","dim_qubit","dim_observation_type","dim_stage","dim_dataset","dim_mode","dim_status","dim_error_reason","fact_qubit_calibration","fact_environment","fact_backend_daily","fact_pipeline_run","fact_quarantine","DatabricksHost","DatabricksHttpPath","DatabricksCatalog","DatabricksSchema"]
+
+annotation __PBI_TimeIntelligenceEnabled = 1
+
+annotation PBI_ProTooling = ["DevMode"]
+
+ref table dim_date
+ref table dim_time
+ref table dim_backend
+ref table dim_qubit
+ref table dim_observation_type
+ref table dim_stage
+ref table dim_dataset
+ref table dim_mode
+ref table dim_status
+ref table dim_error_reason
+ref table fact_qubit_calibration
+ref table fact_environment
+ref table fact_backend_daily
+ref table fact_pipeline_run
+ref table fact_quarantine
+ref table DateTableTemplate_ca299088-5ff3-49cf-bbfe-b822e6d45caf
+ref table LocalDateTable_33ab3d36-4c6d-44d2-b6ec-dca65f41c907
+ref table LocalDateTable_83fadb32-1383-4d0d-ab72-efc42c4a12dd
+ref table LocalDateTable_7391dc18-80dc-4b31-be2b-8d7a997f6662
+ref table LocalDateTable_13b0df70-a447-4982-9ee2-4117acc1f7dc
+ref table LocalDateTable_43e0057c-c4a3-4822-a23f-fe964e4e34cf
+ref table LocalDateTable_57dfdde9-34fa-40e9-b1e7-851630c2a43d
+ref table LocalDateTable_1c90fb48-ac2e-4a99-bb44-7885dec75e72
+ref table LocalDateTable_c234f4b8-83fd-4c56-88ef-35d7f6cd861b
+ref table LocalDateTable_a91580db-3cb2-43f9-807b-1bbd00753691
+
+ref cultureInfo en-US
+

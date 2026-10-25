@@ -1,0 +1,82 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "note0",
+  "position": {
+    "x": 20,
+    "y": 76,
+    "z": 2000,
+    "height": 300,
+    "width": 400,
+    "tabOrder": 2000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Business questions",
+                    "textStyle": {
+                      "fontSize": "13pt",
+                      "color": "#E8ECF8",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "BQ1 · Calibration metrics over time by backend and qubit → page 1",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "BQ2 · Reliability degradation and variability → page 2",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "BQ3 · Calibration vs space weather → page 3",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "BQ4 · Pipeline reliability and quarantine → page 4",
+                    "textStyle": {
+                      "fontSize": "10pt",
+                      "color": "#E8ECF8"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

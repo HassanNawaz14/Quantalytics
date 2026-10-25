@@ -1,0 +1,98 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "cmbWd",
+  "position": {
+    "x": 20,
+    "y": 424,
+    "z": 7000,
+    "height": 288,
+    "width": 400,
+    "tabOrder": 7000
+  },
+  "visual": {
+    "visualType": "lineClusteredColumnComboChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_date"
+                    }
+                  },
+                  "Property": "Weekday Short"
+                }
+              },
+              "queryRef": "dim_date.Weekday Short",
+              "nativeQueryRef": "Weekday Short",
+              "active": true,
+              "displayName": "Weekday"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Daily Avg T1 (µs)"
+                }
+              },
+              "queryRef": "fact_backend_daily.Daily Avg T1 (µs)",
+              "nativeQueryRef": "Daily Avg T1 (µs)"
+            }
+          ]
+        },
+        "Y2": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_environment"
+                    }
+                  },
+                  "Property": "Avg Kp"
+                }
+              },
+              "queryRef": "fact_environment.Avg Kp",
+              "nativeQueryRef": "Avg Kp"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Weekday · Avg T1 (columns) vs Avg Kp (line)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

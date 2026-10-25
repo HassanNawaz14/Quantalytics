@@ -1,0 +1,98 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "cmbBand",
+  "position": {
+    "x": 430,
+    "y": 238,
+    "z": 9000,
+    "height": 240,
+    "width": 420,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "lineClusteredColumnComboChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "F10.7 Band"
+                }
+              },
+              "queryRef": "fact_backend_daily.F10.7 Band",
+              "nativeQueryRef": "F10.7 Band",
+              "active": true,
+              "displayName": "F10.7 band"
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Daily Avg T1 (µs)"
+                }
+              },
+              "queryRef": "fact_backend_daily.Daily Avg T1 (µs)",
+              "nativeQueryRef": "Daily Avg T1 (µs)"
+            }
+          ]
+        },
+        "Y2": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Daily Avg Readout Error"
+                }
+              },
+              "queryRef": "fact_backend_daily.Daily Avg Readout Error",
+              "nativeQueryRef": "Daily Avg Readout Error"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Avg T1 (columns) & Readout Error (line) by F10.7 Band'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

@@ -1,0 +1,209 @@
+table fact_pipeline_run
+	lineageTag: ef47b92d-f4be-4214-b5d4-c13ca5837132
+
+	measure 'Pipeline Runs' = COUNTROWS ( fact_pipeline_run )
+		formatString: #,0
+		displayFolder: Runs
+		lineageTag: 74e33d73-ae70-4cf9-855f-e96b62e9662a
+
+	measure 'Successful Runs' = CALCULATE ( COUNTROWS ( fact_pipeline_run ), dim_status[Status] = "SUCCESS" )
+		formatString: #,0
+		displayFolder: Runs
+		lineageTag: f27a01b2-ce97-48cb-ace1-ca743143c65c
+
+	measure 'Failed Runs' = CALCULATE ( COUNTROWS ( fact_pipeline_run ), dim_status[Status] = "FAILURE" )
+		formatString: #,0
+		displayFolder: Runs
+		lineageTag: e8ba9870-d9dc-4cfd-bbed-e246ef52209c
+
+	measure 'Pipeline Success %' = DIVIDE ( [Successful Runs], [Pipeline Runs] )
+		formatString: 0.0%
+		displayFolder: Runs
+		lineageTag: 5041b3b7-17ee-4a87-9b48-6b8804efc075
+
+	measure 'Avg Run Duration (s)' = AVERAGE ( fact_pipeline_run[Run Duration (s)] )
+		formatString: #,0.0
+		displayFolder: Performance
+		lineageTag: ac586e1e-f41b-42c8-bc6d-75bf24ffa7ab
+
+	measure 'Total Input Rows' = SUM ( fact_pipeline_run[Input Rows] )
+		formatString: #,0
+		displayFolder: Performance
+		lineageTag: a080503b-8d38-4a07-93e4-0a4a768148f5
+
+	measure 'Total Rows Inserted' = SUM ( fact_pipeline_run[Rows Inserted] )
+		formatString: #,0
+		displayFolder: Performance
+		lineageTag: 3818e7dd-f7fb-4907-8476-9f5d9fa0eaa2
+
+	measure 'Total Rows Updated' = SUM ( fact_pipeline_run[Rows Updated] )
+		formatString: #,0
+		displayFolder: Performance
+		lineageTag: e8024792-759a-4db5-bee0-d8f543b97672
+
+	measure 'Throughput (rows/s)' = DIVIDE ( SUM ( fact_pipeline_run[Input Rows] ), SUM ( fact_pipeline_run[Run Duration (s)] ) )
+		formatString: #,0.0
+		displayFolder: Performance
+		lineageTag: 8ddcd36f-cb56-440a-ac1c-3e574a1fe73e
+
+	measure 'Last Run Finished' = MAX ( fact_pipeline_run[Finished At] )
+		formatString: yyyy-mm-dd hh:nn
+		displayFolder: Freshness
+		lineageTag: 7af7b5ad-75fe-4dd2-950a-08b5476e8500
+
+	measure 'Last Failure' = CALCULATE ( MAX ( fact_pipeline_run[Finished At] ), dim_status[Status] = "FAILURE" )
+		formatString: yyyy-mm-dd hh:nn
+		displayFolder: Freshness
+		lineageTag: 170c631a-ad57-409a-b6e0-09684e875a93
+
+	column pipeline_run_key
+		dataType: string
+		isHidden
+		lineageTag: c7b9b597-626e-472b-a459-6a6ca03e0f2b
+		summarizeBy: none
+		sourceColumn: pipeline_run_key
+
+	column run_id
+		dataType: string
+		isHidden
+		lineageTag: c37dd8b7-fc2f-48bf-98ed-1153d0e8c026
+		summarizeBy: none
+		sourceColumn: run_id
+
+	column date_key
+		dataType: int64
+		isHidden
+		lineageTag: bf1e6322-b660-4b7f-86b3-c03791a5b58f
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column time_key
+		dataType: int64
+		isHidden
+		lineageTag: feb8c4c1-f45a-4b20-96e9-087fcd9c72d4
+		summarizeBy: none
+		sourceColumn: time_key
+
+	column stage_key
+		dataType: string
+		isHidden
+		lineageTag: a5c961ca-0499-4fd9-b45b-044677a4f6bf
+		summarizeBy: none
+		sourceColumn: stage_key
+
+	column dataset_key
+		dataType: string
+		isHidden
+		lineageTag: 6dfbf08a-3bac-4d25-ae54-1275bd3c6894
+		summarizeBy: none
+		sourceColumn: dataset_key
+
+	column mode_key
+		dataType: string
+		isHidden
+		lineageTag: cdc190db-e123-4e44-8b4a-f8f49801243f
+		summarizeBy: none
+		sourceColumn: mode_key
+
+	column status_key
+		dataType: string
+		isHidden
+		lineageTag: 9e3f71b1-295c-448b-b061-8952ac1df217
+		summarizeBy: none
+		sourceColumn: status_key
+
+	column 'Started At'
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 09fbe04e-3364-4305-9826-edf197e17b2c
+		summarizeBy: none
+		sourceColumn: started_at
+
+		variation Variation
+			isDefault
+			relationship: 82fa0ab9-9b99-4e96-90f5-a52e24b8c13d
+			defaultHierarchy: LocalDateTable_1c90fb48-ac2e-4a99-bb44-7885dec75e72.'Date Hierarchy'
+
+	column 'Finished At'
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 46af18d1-4ce9-48b3-b63a-b93c4e38b343
+		summarizeBy: none
+		sourceColumn: finished_at
+
+		variation Variation
+			isDefault
+			relationship: b03a885f-e7e9-4716-9fbf-39b36120792c
+			defaultHierarchy: LocalDateTable_c234f4b8-83fd-4c56-88ef-35d7f6cd861b.'Date Hierarchy'
+
+	column 'Run Duration (s)'
+		dataType: int64
+		formatString: #,0
+		lineageTag: 4f3d6e53-27f5-4af4-9df4-fd3b70f4627c
+		summarizeBy: sum
+		sourceColumn: duration_seconds
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Input Rows'
+		dataType: int64
+		formatString: #,0
+		lineageTag: 4061fe64-55ae-4555-8846-e42afd0638f6
+		summarizeBy: sum
+		sourceColumn: input_rows
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Rows Inserted'
+		dataType: int64
+		formatString: #,0
+		lineageTag: f6cf5e73-f4dc-4970-b6ad-9b535af4b84e
+		summarizeBy: sum
+		sourceColumn: rows_inserted
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Rows Updated'
+		dataType: int64
+		formatString: #,0
+		lineageTag: 3667c8d1-d0c6-434c-ad62-6a966d85d980
+		summarizeBy: sum
+		sourceColumn: rows_updated
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Rows Quarantined (log)'
+		dataType: int64
+		formatString: #,0
+		lineageTag: bf5c1349-0935-4e72-aa45-35ff91aa60a0
+		summarizeBy: sum
+		sourceColumn: rows_quarantined
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Error Message'
+		dataType: string
+		lineageTag: 601d00ab-35fc-4eeb-8de1-03333719c2e3
+		summarizeBy: none
+		sourceColumn: error_message
+
+	column parameters
+		dataType: string
+		isHidden
+		lineageTag: 0b2df7fb-dc1e-471b-80ad-b78c2f983fb3
+		summarizeBy: none
+		sourceColumn: parameters
+
+	partition fact_pipeline_run = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "fact_pipeline_run", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

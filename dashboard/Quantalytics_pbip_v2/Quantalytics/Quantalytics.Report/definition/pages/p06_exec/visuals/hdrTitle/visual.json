@@ -1,0 +1,49 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.0.0/schema.json",
+  "name": "hdrTitle",
+  "position": {
+    "x": 20,
+    "y": 6,
+    "z": 0,
+    "height": 58,
+    "width": 520,
+    "tabOrder": 0
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Executive Summary",
+                    "textStyle": {
+                      "fontSize": "20pt",
+                      "color": "#E8ECF8",
+                      "fontWeight": "bold"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Which QPUs are healthiest, which react most to space weather, and is the pipeline trustworthy?",
+                    "textStyle": {
+                      "fontSize": "9pt",
+                      "color": "#AAB3D1"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

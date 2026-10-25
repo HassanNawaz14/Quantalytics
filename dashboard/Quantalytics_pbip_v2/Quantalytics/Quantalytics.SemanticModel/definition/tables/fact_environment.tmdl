@@ -1,0 +1,164 @@
+table fact_environment
+	lineageTag: 8104e37c-533b-42be-8950-f2b403a4c3dc
+
+	measure 'Avg Kp' = AVERAGE ( fact_environment[Kp Index] )
+		formatString: 0.00
+		displayFolder: Space Weather
+		lineageTag: 2bd3e1de-259c-479b-a246-26eaf9f83221
+
+	measure 'Max Kp' = MAX ( fact_environment[Kp Index] )
+		formatString: 0.00
+		displayFolder: Space Weather
+		lineageTag: 7bacb462-199b-4691-a9ee-ba75ad55350f
+
+	measure 'Avg F10.7 (sfu)' = AVERAGE ( fact_environment[F10.7 Flux (sfu)] )
+		formatString: #,0.0
+		displayFolder: Space Weather
+		lineageTag: f2455919-d143-4dd7-b2a9-090b3f11b8cd
+
+	measure 'Days with Kp ≥ 5' = COUNTROWS ( FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( MAX ( fact_environment[Kp Index] ) ) >= 5 ) )
+		formatString: #,0
+		displayFolder: Space Weather
+		lineageTag: cd4e7860-06e4-46ea-b84f-7e23c1c7cd6a
+
+	measure 'Max F10.7 (sfu)' = MAX ( fact_environment[F10.7 Flux (sfu)] )
+		formatString: #,0.0
+		displayFolder: Space Weather
+		lineageTag: 85a9c57f-2db4-4fcf-915a-12c6d55200c9
+
+	measure 'Quiet Days (Kp < 3)' = COUNTROWS ( FILTER ( VALUES ( dim_date[Date] ), NOT ISBLANK ( CALCULATE ( MAX ( fact_environment[Kp Index] ) ) ) && CALCULATE ( MAX ( fact_environment[Kp Index] ) ) < 5 && CALCULATE ( MAX ( fact_environment[Kp Index] ) ) < 3 ) )
+		formatString: #,0
+		displayFolder: Space Weather
+		lineageTag: 2c001bdb-d3a0-4a35-a120-7ae4af054c07
+
+	measure 'Avg Kp (lag 0d)' = VAR d = MAX ( dim_date[Date] ) RETURN CALCULATE ( [Avg Kp], FILTER ( ALL ( dim_date ), dim_date[Date] = d - 0 ) )
+		formatString: 0.00
+		displayFolder: Lagged Kp
+		lineageTag: 22a361ba-9cb8-4cc2-968b-7d21ae77463c
+
+	measure 'Avg Kp (lag 1d)' = VAR d = MAX ( dim_date[Date] ) RETURN CALCULATE ( [Avg Kp], FILTER ( ALL ( dim_date ), dim_date[Date] = d - 1 ) )
+		formatString: 0.00
+		displayFolder: Lagged Kp
+		lineageTag: a853c2fe-d7d3-4ff4-8c6c-1dd1740f9d42
+
+	measure 'Avg Kp (lag 2d)' = VAR d = MAX ( dim_date[Date] ) RETURN CALCULATE ( [Avg Kp], FILTER ( ALL ( dim_date ), dim_date[Date] = d - 2 ) )
+		formatString: 0.00
+		displayFolder: Lagged Kp
+		lineageTag: 2d9bee53-e92b-4463-80d5-95cf6ed86c50
+
+	measure 'Avg Kp (lag 3d)' = VAR d = MAX ( dim_date[Date] ) RETURN CALCULATE ( [Avg Kp], FILTER ( ALL ( dim_date ), dim_date[Date] = d - 3 ) )
+		formatString: 0.00
+		displayFolder: Lagged Kp
+		lineageTag: 7efda0bf-0fbf-412d-8cb4-1cb3b26d81d2
+
+	measure 'Avg Kp (lag 5d)' = VAR d = MAX ( dim_date[Date] ) RETURN CALCULATE ( [Avg Kp], FILTER ( ALL ( dim_date ), dim_date[Date] = d - 5 ) )
+		formatString: 0.00
+		displayFolder: Lagged Kp
+		lineageTag: 72f27e76-b82a-4844-a556-9a894e1be120
+
+	measure 'Avg Kp (lag 7d)' = VAR d = MAX ( dim_date[Date] ) RETURN CALCULATE ( [Avg Kp], FILTER ( ALL ( dim_date ), dim_date[Date] = d - 7 ) )
+		formatString: 0.00
+		displayFolder: Lagged Kp
+		lineageTag: fdd8e8b7-2f13-4c91-84ce-402d6a4128e4
+
+	measure 'Kp Coverage %' = DIVIDE ( COUNTROWS ( FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( COUNT ( fact_environment[Kp Index] ) ) > 0 ) ), [Calendar Days] )
+		formatString: 0.0%
+		displayFolder: Coverage
+		lineageTag: e59731d9-823e-4672-8da8-e7797f3bc8b7
+
+	measure 'F10.7 Coverage %' = DIVIDE ( COUNTROWS ( FILTER ( VALUES ( dim_date[Date] ), CALCULATE ( COUNT ( fact_environment[F10.7 Flux (sfu)] ) ) > 0 ) ), [Calendar Days] )
+		formatString: 0.0%
+		displayFolder: Coverage
+		lineageTag: 87520825-55bb-4677-bf83-ad0083830836
+
+	column environment_key
+		dataType: string
+		isHidden
+		lineageTag: 14c64d50-6f20-4323-8c07-75f793730fb2
+		summarizeBy: none
+		sourceColumn: environment_key
+
+	column date_key
+		dataType: int64
+		isHidden
+		lineageTag: cda145f0-32c7-41ac-8013-4e47e9d4cc0d
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column time_key
+		dataType: int64
+		isHidden
+		lineageTag: db073e0b-28bb-489e-806c-f94c4cafc6bf
+		summarizeBy: none
+		sourceColumn: time_key
+
+	column observation_type_key
+		dataType: string
+		isHidden
+		lineageTag: 7e4d2cf9-1e6c-4cab-80d5-a8e355213f4e
+		summarizeBy: none
+		sourceColumn: observation_type_key
+
+	column observation_type
+		dataType: string
+		isHidden
+		lineageTag: 5874ffa4-ddb2-420f-b371-a14279eb72f1
+		summarizeBy: none
+		sourceColumn: observation_type
+
+	column 'Kp Index'
+		dataType: double
+		formatString: 0.00
+		lineageTag: 40fe2bdd-d572-46af-a428-648da0898951
+		summarizeBy: sum
+		sourceColumn: kp_index
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'F10.7 Flux (sfu)'
+		dataType: double
+		formatString: #,0.0
+		lineageTag: 45c21cfe-abaa-41bc-92ee-ab9e50f1f627
+		summarizeBy: sum
+		sourceColumn: solar_flux
+
+		annotation SummarizationSetBy = Automatic
+
+	column Source
+		dataType: string
+		lineageTag: b48cc937-2509-47f9-af45-1414fb9ee44d
+		summarizeBy: none
+		sourceColumn: source
+
+	column source_file
+		dataType: string
+		isHidden
+		lineageTag: 418324e0-344d-44ec-9ee3-c1c0d6e72117
+		summarizeBy: none
+		sourceColumn: source_file
+
+	column 'Silver Load Time'
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 8d0636ea-43a2-46d6-89f5-e851057ab87a
+		summarizeBy: none
+		sourceColumn: silver_load_timestamp
+
+		variation Variation
+			isDefault
+			relationship: 1faec50d-acad-434e-b12c-076b8dc769e3
+			defaultHierarchy: LocalDateTable_57dfdde9-34fa-40e9-b1e7-851630c2a43d.'Date Hierarchy'
+
+	partition fact_environment = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "fact_environment", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

@@ -1,0 +1,145 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "cLagT2",
+  "position": {
+    "x": 435,
+    "y": 238,
+    "z": 9000,
+    "height": 236,
+    "width": 405,
+    "tabOrder": 9000
+  },
+  "visual": {
+    "visualType": "clusteredColumnChart",
+    "query": {
+      "queryState": {
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "r T2 vs Kp · lag 0d"
+                }
+              },
+              "queryRef": "fact_backend_daily.r T2 vs Kp · lag 0d",
+              "nativeQueryRef": "r T2 vs Kp · lag 0d"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "r T2 vs Kp · lag 1d"
+                }
+              },
+              "queryRef": "fact_backend_daily.r T2 vs Kp · lag 1d",
+              "nativeQueryRef": "r T2 vs Kp · lag 1d"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "r T2 vs Kp · lag 2d"
+                }
+              },
+              "queryRef": "fact_backend_daily.r T2 vs Kp · lag 2d",
+              "nativeQueryRef": "r T2 vs Kp · lag 2d"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "r T2 vs Kp · lag 3d"
+                }
+              },
+              "queryRef": "fact_backend_daily.r T2 vs Kp · lag 3d",
+              "nativeQueryRef": "r T2 vs Kp · lag 3d"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "r T2 vs Kp · lag 5d"
+                }
+              },
+              "queryRef": "fact_backend_daily.r T2 vs Kp · lag 5d",
+              "nativeQueryRef": "r T2 vs Kp · lag 5d"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "r T2 vs Kp · lag 7d"
+                }
+              },
+              "queryRef": "fact_backend_daily.r T2 vs Kp · lag 7d",
+              "nativeQueryRef": "r T2 vs Kp · lag 7d"
+            }
+          ]
+        }
+      }
+    },
+    "objects": {
+      "labels": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'r(T2, Kp) by Lag (days)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

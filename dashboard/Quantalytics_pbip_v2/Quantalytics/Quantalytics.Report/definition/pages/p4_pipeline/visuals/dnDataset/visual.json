@@ -1,0 +1,79 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "dnDataset",
+  "position": {
+    "x": 510,
+    "y": 488,
+    "z": 15000,
+    "height": 224,
+    "width": 250,
+    "tabOrder": 15000
+  },
+  "visual": {
+    "visualType": "donutChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_dataset"
+                    }
+                  },
+                  "Property": "Dataset"
+                }
+              },
+              "queryRef": "dim_dataset.Dataset",
+              "nativeQueryRef": "Dataset",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_quarantine"
+                    }
+                  },
+                  "Property": "Quarantined Rows"
+                }
+              },
+              "queryRef": "fact_quarantine.Quarantined Rows",
+              "nativeQueryRef": "Quarantined Rows"
+            }
+          ]
+        }
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Quarantine by Dataset'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

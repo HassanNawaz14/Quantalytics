@@ -1,0 +1,41 @@
+table dim_observation_type
+	lineageTag: 7c938f40-8574-4534-8a29-aea8465107b9
+
+	column observation_type_key
+		dataType: string
+		isHidden
+		lineageTag: dcb04b37-9ab5-4c58-ae4d-8a1b8a3f2439
+		summarizeBy: none
+		sourceColumn: observation_type_key
+
+	column 'Observation Type'
+		dataType: string
+		lineageTag: 6ce97da4-bdae-4d13-86da-a1d7f4a843bf
+		summarizeBy: none
+		sourceColumn: observation_type
+
+	column Description
+		dataType: string
+		lineageTag: a0d30f18-4c2c-42c6-91d9-7fae46c452f3
+		summarizeBy: none
+		sourceColumn: description
+
+	column Unit
+		dataType: string
+		lineageTag: 7a68d6c3-7027-4a93-b61c-f2787f33139d
+		summarizeBy: none
+		sourceColumn: default_unit
+
+	partition dim_observation_type = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "dim_observation_type", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

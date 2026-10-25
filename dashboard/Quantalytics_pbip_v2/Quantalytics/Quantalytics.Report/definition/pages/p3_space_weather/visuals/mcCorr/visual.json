@@ -1,0 +1,134 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "mcCorr",
+  "position": {
+    "x": 860,
+    "y": 488,
+    "z": 13000,
+    "height": 160,
+    "width": 400,
+    "tabOrder": 13000
+  },
+  "visual": {
+    "visualType": "multiRowCard",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Corr T1 vs Kp"
+                }
+              },
+              "queryRef": "fact_backend_daily.Corr T1 vs Kp",
+              "nativeQueryRef": "Corr T1 vs Kp"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Corr T2 vs Kp"
+                }
+              },
+              "queryRef": "fact_backend_daily.Corr T2 vs Kp",
+              "nativeQueryRef": "Corr T2 vs Kp"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Corr Readout Error vs Kp"
+                }
+              },
+              "queryRef": "fact_backend_daily.Corr Readout Error vs Kp",
+              "nativeQueryRef": "Corr Readout Error vs Kp"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Corr T1 vs F10.7"
+                }
+              },
+              "queryRef": "fact_backend_daily.Corr T1 vs F10.7",
+              "nativeQueryRef": "Corr T1 vs F10.7"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_backend_daily"
+                    }
+                  },
+                  "Property": "Correlation Strength"
+                }
+              },
+              "queryRef": "fact_backend_daily.Correlation Strength",
+              "nativeQueryRef": "Correlation Strength"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_backend_daily"
+                  }
+                },
+                "Property": "Corr T1 vs Kp"
+              }
+            },
+            "direction": "Descending"
+          }
+        ],
+        "isDefaultSort": true
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Correlation Summary (Pearson r)'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

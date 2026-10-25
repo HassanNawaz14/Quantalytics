@@ -1,0 +1,29 @@
+table dim_stage
+	lineageTag: 720928a6-15f4-44ce-bf36-9b48c8954254
+
+	column stage_key
+		dataType: string
+		isHidden
+		lineageTag: 91f37d26-6a5e-4d0b-bd7f-108505bf30fe
+		summarizeBy: none
+		sourceColumn: stage_key
+
+	column Stage
+		dataType: string
+		lineageTag: 64248ae8-9d4b-4a2a-9c0d-381e87f6d6df
+		summarizeBy: none
+		sourceColumn: stage
+
+	partition dim_stage = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "dim_stage", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

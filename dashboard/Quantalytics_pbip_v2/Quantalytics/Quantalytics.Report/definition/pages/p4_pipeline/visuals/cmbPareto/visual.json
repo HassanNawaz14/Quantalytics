@@ -1,0 +1,114 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "cmbPareto",
+  "position": {
+    "x": 20,
+    "y": 488,
+    "z": 14000,
+    "height": 224,
+    "width": 480,
+    "tabOrder": 14000
+  },
+  "visual": {
+    "visualType": "lineClusteredColumnComboChart",
+    "query": {
+      "queryState": {
+        "Category": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_error_reason"
+                    }
+                  },
+                  "Property": "Error Reason"
+                }
+              },
+              "queryRef": "dim_error_reason.Error Reason",
+              "nativeQueryRef": "Error Reason",
+              "active": true
+            }
+          ]
+        },
+        "Y": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_quarantine"
+                    }
+                  },
+                  "Property": "Quarantined Rows"
+                }
+              },
+              "queryRef": "fact_quarantine.Quarantined Rows",
+              "nativeQueryRef": "Quarantined Rows"
+            }
+          ]
+        },
+        "Y2": {
+          "projections": [
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_quarantine"
+                    }
+                  },
+                  "Property": "Cumulative Quarantine %"
+                }
+              },
+              "queryRef": "fact_quarantine.Cumulative Quarantine %",
+              "nativeQueryRef": "Cumulative Quarantine %"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Measure": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_quarantine"
+                  }
+                },
+                "Property": "Quarantined Rows"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Quarantine Pareto by Error Reason'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

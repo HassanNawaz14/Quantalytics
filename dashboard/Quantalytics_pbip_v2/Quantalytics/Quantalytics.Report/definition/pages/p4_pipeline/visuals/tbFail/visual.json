@@ -1,0 +1,147 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "tbFail",
+  "position": {
+    "x": 770,
+    "y": 488,
+    "z": 16000,
+    "height": 224,
+    "width": 490,
+    "tabOrder": 16000
+  },
+  "visual": {
+    "visualType": "tableEx",
+    "query": {
+      "queryState": {
+        "Values": {
+          "projections": [
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_dataset"
+                    }
+                  },
+                  "Property": "Dataset"
+                }
+              },
+              "queryRef": "dim_dataset.Dataset",
+              "nativeQueryRef": "Dataset"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_stage"
+                    }
+                  },
+                  "Property": "Stage"
+                }
+              },
+              "queryRef": "dim_stage.Stage",
+              "nativeQueryRef": "Stage"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "dim_mode"
+                    }
+                  },
+                  "Property": "Mode"
+                }
+              },
+              "queryRef": "dim_mode.Mode",
+              "nativeQueryRef": "Mode"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_pipeline_run"
+                    }
+                  },
+                  "Property": "Finished At"
+                }
+              },
+              "queryRef": "fact_pipeline_run.Finished At",
+              "nativeQueryRef": "Finished At"
+            },
+            {
+              "field": {
+                "Column": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_pipeline_run"
+                    }
+                  },
+                  "Property": "Error Message"
+                }
+              },
+              "queryRef": "fact_pipeline_run.Error Message",
+              "nativeQueryRef": "Error Message"
+            },
+            {
+              "field": {
+                "Measure": {
+                  "Expression": {
+                    "SourceRef": {
+                      "Entity": "fact_pipeline_run"
+                    }
+                  },
+                  "Property": "Failed Runs"
+                }
+              },
+              "queryRef": "fact_pipeline_run.Failed Runs",
+              "nativeQueryRef": "Failed Runs"
+            }
+          ]
+        }
+      },
+      "sortDefinition": {
+        "sort": [
+          {
+            "field": {
+              "Column": {
+                "Expression": {
+                  "SourceRef": {
+                    "Entity": "fact_pipeline_run"
+                  }
+                },
+                "Property": "Finished At"
+              }
+            },
+            "direction": "Descending"
+          }
+        ]
+      }
+    },
+    "visualContainerObjects": {
+      "title": [
+        {
+          "properties": {
+            "show": {
+              "expr": {
+                "Literal": {
+                  "Value": "true"
+                }
+              }
+            },
+            "text": {
+              "expr": {
+                "Literal": {
+                  "Value": "'Latest Failed Runs'"
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

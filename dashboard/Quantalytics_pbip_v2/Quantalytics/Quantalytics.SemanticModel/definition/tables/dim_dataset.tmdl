@@ -1,0 +1,29 @@
+table dim_dataset
+	lineageTag: e45e24cd-78e4-4f3b-b86a-1c9c5569372d
+
+	column dataset_key
+		dataType: string
+		isHidden
+		lineageTag: b34a9a02-96c0-4b9d-9238-dde4c968fa33
+		summarizeBy: none
+		sourceColumn: dataset_key
+
+	column Dataset
+		dataType: string
+		lineageTag: de9db721-325c-4758-b86f-dc8057833f6d
+		summarizeBy: none
+		sourceColumn: dataset
+
+	partition dim_dataset = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "dim_dataset", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

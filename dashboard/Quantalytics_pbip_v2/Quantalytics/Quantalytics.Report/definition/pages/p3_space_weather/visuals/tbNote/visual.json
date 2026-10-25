@@ -1,0 +1,37 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.14.0/schema.json",
+  "name": "tbNote",
+  "position": {
+    "x": 860,
+    "y": 654,
+    "z": 14000,
+    "height": 58,
+    "width": 400,
+    "tabOrder": 14000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "Daily Kp is shared by all backends on a given day, so correlations are exploratory. Kp is historical 3-hourly only until NOAA ingestion is rebuilt.",
+                    "textStyle": {
+                      "fontSize": "9pt",
+                      "color": "#AAB3D1"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "drillFilterOtherVisuals": true
+  }
+}

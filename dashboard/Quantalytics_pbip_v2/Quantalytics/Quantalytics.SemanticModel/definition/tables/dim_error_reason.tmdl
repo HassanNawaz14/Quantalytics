@@ -1,0 +1,29 @@
+table dim_error_reason
+	lineageTag: 724ddb3f-29b0-4fc9-9110-8ac097aadd05
+
+	column error_reason_key
+		dataType: string
+		isHidden
+		lineageTag: 2d0ceb73-e670-4ab3-b8ca-87f53e952587
+		summarizeBy: none
+		sourceColumn: error_reason_key
+
+	column 'Error Reason'
+		dataType: string
+		lineageTag: 589424a0-a5ce-499d-89e6-8712e0ffdb26
+		summarizeBy: none
+		sourceColumn: error_reason
+
+	partition dim_error_reason = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "dim_error_reason", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

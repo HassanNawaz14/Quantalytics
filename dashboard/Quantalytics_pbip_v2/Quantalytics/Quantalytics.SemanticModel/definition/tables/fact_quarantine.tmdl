@@ -1,0 +1,80 @@
+table fact_quarantine
+	lineageTag: fc3c714b-60c5-4a60-8301-a9bdc483c626
+
+	measure 'Quarantined Rows' = COUNTROWS ( fact_quarantine )
+		formatString: #,0
+		displayFolder: Quarantine
+		lineageTag: 0ae33a80-e18d-48b2-ad3f-cb0dbf0adf83
+
+	measure 'Cumulative Quarantine %' = VAR cur = [Quarantined Rows] VAR reasons = ALLSELECTED ( dim_error_reason[Error Reason] ) VAR cumul = SUMX ( FILTER ( reasons, [Quarantined Rows] >= cur ), [Quarantined Rows] ) RETURN DIVIDE ( cumul, CALCULATE ( [Quarantined Rows], ALLSELECTED ( dim_error_reason ) ) )
+		formatString: 0%
+		displayFolder: Quarantine
+		lineageTag: 5c6c2e7d-769f-4ab5-91a6-1adf4cc0cd46
+
+	column quarantine_key
+		dataType: string
+		isHidden
+		lineageTag: 511c7bb2-1bb9-4198-a4c2-c5b9b89386db
+		summarizeBy: none
+		sourceColumn: quarantine_key
+
+	column date_key
+		dataType: int64
+		isHidden
+		lineageTag: 4a9a4809-3bb7-4bf2-953e-dc2bc2065c65
+		summarizeBy: none
+		sourceColumn: date_key
+
+	column time_key
+		dataType: int64
+		isHidden
+		lineageTag: 60f749de-883f-40b4-99a7-601ce4b60927
+		summarizeBy: none
+		sourceColumn: time_key
+
+	column dataset_key
+		dataType: string
+		isHidden
+		lineageTag: ca4aefaa-9222-4d97-841b-f18d426bef1f
+		summarizeBy: none
+		sourceColumn: dataset_key
+
+	column error_reason_key
+		dataType: string
+		isHidden
+		lineageTag: 1219e428-71c3-4ee5-a78e-a4f725fa1a76
+		summarizeBy: none
+		sourceColumn: error_reason_key
+
+	column source_file
+		dataType: string
+		isHidden
+		lineageTag: 4c3810e6-c749-4f49-a448-41017519d6ba
+		summarizeBy: none
+		sourceColumn: source_file
+
+	column 'Quarantined At'
+		dataType: dateTime
+		formatString: yyyy-mm-dd hh:nn:ss
+		lineageTag: 9be858e2-2559-40ed-a69e-62f27dd4da0a
+		summarizeBy: none
+		sourceColumn: quarantined_at
+
+		variation Variation
+			isDefault
+			relationship: 9147314c-3729-43ab-8e68-81b6416bae70
+			defaultHierarchy: LocalDateTable_a91580db-3cb2-43f9-807b-1bbd00753691.'Date Hierarchy'
+
+	partition fact_quarantine = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "fact_quarantine", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+

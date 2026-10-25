@@ -1,0 +1,65 @@
+table dim_time
+	lineageTag: faadcd80-e44b-45b8-8470-d43eb6449470
+
+	column time_key
+		dataType: int64
+		isHidden
+		lineageTag: c2481fc4-217a-4cd8-bfa7-c208f4c2b9ac
+		summarizeBy: none
+		sourceColumn: time_key
+
+	column Hour
+		dataType: int64
+		lineageTag: 5cc9c809-d2e4-4422-bfc5-5066ebe3f959
+		summarizeBy: none
+		sourceColumn: hour_24
+
+	column Minute
+		dataType: int64
+		lineageTag: efb90a57-a33d-4172-9a13-28305666659a
+		summarizeBy: none
+		sourceColumn: minute
+
+	column Second
+		dataType: int64
+		lineageTag: f0f1490a-1649-4567-9a8e-84751a2ecf62
+		summarizeBy: none
+		sourceColumn: second
+
+	column Time
+		dataType: string
+		lineageTag: b7b96216-d032-44c1-9250-d75c7da9089d
+		summarizeBy: none
+		sourceColumn: time_label
+
+	column '3h Bucket'
+		dataType: int64
+		lineageTag: 242f99af-d448-4764-8e37-5f42f5ec34f9
+		summarizeBy: none
+		sourceColumn: time_bucket_3h
+
+	column hour_bucket
+		dataType: int64
+		isHidden
+		lineageTag: 0f7027c1-f24a-4064-aa44-49b466caaf8a
+		summarizeBy: none
+		sourceColumn: hour_bucket
+
+	column 'Time Window' = FORMAT ( dim_time[3h Bucket] * 3, "00" ) & ":00-" & FORMAT ( dim_time[3h Bucket] * 3 + 3, "00" ) & ":00"
+		dataType: string
+		lineageTag: 89c1139a-873d-4d92-b618-ee1b2546f663
+		summarizeBy: none
+
+	partition dim_time = m
+		mode: import
+		source =
+				let
+					Source = Databricks.Catalogs(DatabricksHost, DatabricksHttpPath, [Catalog = null, Database = null, EnableAutomaticProxyDiscovery = null]),
+					Cat = Source{[Name = DatabricksCatalog, Kind = "Database"]}[Data],
+					Sch = Cat{[Name = DatabricksSchema, Kind = "Schema"]}[Data],
+					Tbl = Sch{[Name = "dim_time", Kind = "Table"]}[Data]
+				in
+					Tbl
+
+	annotation PBI_ResultType = Table
+
