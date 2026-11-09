@@ -100,6 +100,8 @@ You need four values. Write them in a **private notepad on your computer** (not 
 2. Click your instance and copy the long text that starts with `crn:v1:`.
 3. It is also in your `.env` file as `IBM_QUANTUM_INSTANCE`.
 
+> The API key and the instance CRN must belong to the **same IBM account**. If the key is still valid but the instance is not listed for that account, IBM rejects the pair with *"The given API token is associated with an account that does not have access to the instance."* The collector now falls back to an instance the key can access and prints a warning; copy the correct CRN from the **Instances** page and update the secret afterwards.
+
 ### Step 1.3 – Databricks web address
 1. Log in to Databricks.
 2. Look at the address bar of your browser. It looks like `https://dbc-xxxxxxxx-xxxx.cloud.databricks.com/...`
@@ -232,6 +234,11 @@ Modes
 The IBM key is read from environment variables, never from the code:
   IBM_QUANTUM_API_KEY    your IBM API key
   IBM_QUANTUM_INSTANCE   your IBM instance CRN (starts with crn:v1:)
+
+If the CRN in IBM_QUANTUM_INSTANCE is no longer accessible by the account that
+owns the API key (for example after an IBM instance change), the collector falls
+back to an instance the key can access and prints a warning telling you to
+refresh the secret.
 """
 import argparse
 import csv
@@ -244,6 +251,7 @@ from datetime import datetime, timedelta, timezone
 from threading import Lock
 
 from qiskit_ibm_runtime import QiskitRuntimeService
+from qiskit_ibm_runtime.exceptions import IBMInputValueError
 
 
 BACKENDS = ["ibm_kingston", "ibm_fez", "ibm_marrakesh"]
@@ -303,16 +311,8 @@ def load_env_file():
             os.environ.setdefault(key.strip(), value.strip().strip('"').strip("'"))
 
 
-def connect():
-    api_key = os.environ.get("IBM_QUANTUM_API_KEY", "").strip()
-    instance_crn = os.environ.get("IBM_QUANTUM_INSTANCE", "").strip()
-    if not api_key:
-        raise RuntimeError("IBM_QUANTUM_API_KEY is missing (check the GitHub secret).")
-    if not instance_crn.startswith("crn:v1:"):
-        raise RuntimeError(
-            "IBM_QUANTUM_INSTANCE must be the full CRN beginning with 'crn:v1:'."
-        )
-    print("Connecting to IBM Quantum...", flush=True)
+def _open_instance(api_key, instance_crn):
+    """Build a service/client pair for one instance and list its backends."""
     service = QiskitRuntimeService(
         channel="ibm_quantum_platform",
         token=api_key,
@@ -320,8 +320,92 @@ def connect():
     )
     client = service._get_api_client(instance_crn)
     client._session._timeout = (5, REQUEST_TIMEOUT)
-    print("Connected. Historical metadata requests do not submit quantum jobs.", flush=True)
-    return client
+    backends = {item.get("name") for item in client.list_backends()}
+    return client, backends
+
+
+def _instance_description(service, instance_crn):
+    for instance in service.instances():
+        if instance.get("crn") == instance_crn:
+            return "%s (%s plan)" % (instance.get("name"), instance.get("plan"))
+    return "an instance"
+
+
+def connect():
+    api_key = os.environ.get("IBM_QUANTUM_API_KEY", "").strip()
+    instance_crn = os.environ.get("IBM_QUANTUM_INSTANCE", "").strip()
+    if not api_key:
+        raise RuntimeError("IBM_QUANTUM_API_KEY is missing (check the GitHub secret).")
+    if instance_crn and not instance_crn.startswith("crn:v1:"):
+        raise RuntimeError(
+            "IBM_QUANTUM_INSTANCE must be the full CRN beginning with 'crn:v1:'."
+        )
+
+    print("Connecting to IBM Quantum...", flush=True)
+
+    if instance_crn:
+        try:
+            client, backends = _open_instance(api_key, instance_crn)
+        except IBMInputValueError as exc:
+            print("WARNING | IBM_QUANTUM_INSTANCE is not accessible with this API key.", flush=True)
+            print("WARNING | IBM says:", exc, flush=True)
+            print("WARNING | Refreshing the secret is recommended; trying another instance now.", flush=True)
+        else:
+            missing = [name for name in BACKENDS if name not in backends]
+            if not missing:
+                print("Connected. Historical metadata requests do not submit quantum jobs.", flush=True)
+                return client
+            print(
+                "WARNING | The configured instance does not expose: " + ", ".join(missing),
+                flush=True,
+            )
+
+    try:
+        auto_service = QiskitRuntimeService(
+            channel="ibm_quantum_platform",
+            token=api_key,
+            instance="auto",
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            "No IBM Quantum instance is available to this API key. "
+            "Open https://quantum.cloud.ibm.com/, create an instance (or refresh the existing one), "
+            "then update the IBM_QUANTUM_INSTANCE secret. IBM says: " + str(exc)
+        ) from exc
+
+    candidates = [auto_service.active_instance()]
+    for instance in auto_service.instances():
+        crn = instance.get("crn")
+        if crn and crn not in candidates:
+            candidates.append(crn)
+
+    active_backends = set()
+    for crn in candidates:
+        label = _instance_description(auto_service, crn)
+        try:
+            client, backends = _open_instance(api_key, crn)
+        except Exception as exc:
+            print("Skipping %s: %s" % (label, exc), flush=True)
+            continue
+        if not active_backends:
+            active_backends = backends
+        missing = [name for name in BACKENDS if name not in backends]
+        if not missing:
+            if crn != auto_service.active_instance() or instance_crn != crn:
+                print(
+                    "WARNING | Using %s instead. Update the IBM_QUANTUM_INSTANCE secret to stop this warning."
+                    % label,
+                    flush=True,
+                )
+            print("Connected. Historical metadata requests do not submit quantum jobs.", flush=True)
+            return client
+
+    raise RuntimeError(
+        "No instance available to this API key exposes all required backends (%s). "
+        "Backends found: %s. Create or refresh an instance at https://quantum.cloud.ibm.com/, "
+        "or update BACKENDS at the top of ingestion/ibm_collect.py."
+        % (", ".join(BACKENDS), ", ".join(sorted(active_backends)) or "none")
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1174,6 +1258,8 @@ Open the failed run in GitHub (**Actions** → click the run → click **collect
 | `IBM_QUANTUM_API_KEY is missing` | The secret name was typed differently | Check the spelling in Part 4 (capital letters matter) |
 | `IBM_QUANTUM_INSTANCE must be the full CRN` | The value does not start with `crn:v1:` | Copy the full CRN again (Step 1.2) |
 | `IBM smoke test failed: ...` | IBM rejected the key or the instance | Check both values. If you created a new key, update the secret |
+| `The given API token is associated with an account that does not have access to the instance` | The CRN in `IBM_QUANTUM_INSTANCE` belongs to a different IBM account than the API key, or IBM replaced the instance | The collector now retries with an instance the key can access. If the run succeeds, copy the correct CRN from the **Instances** page and update `IBM_QUANTUM_INSTANCE`. If it still fails, create or refresh an instance on IBM Quantum Platform |
+| `No IBM Quantum instance is available to this API key` | The account has no active instance at all | Open <https://quantum.cloud.ibm.com/>, create an instance (the free plan is enough), copy its CRN, and update the secret |
 | `A full load was already done` | You ran **full** a second time. This is a safety stop | Nothing to fix. Use **incremental** from now on |
 | `No watermark file found ... Run the FULL load once` | Incremental was run before the full load | Do Part 6 first |
 | `Some requests failed. Nothing was saved...` | IBM or the network had a problem during an incremental run | Press **Run workflow → incremental** again. Nothing was lost, because the bookmark did not move |
