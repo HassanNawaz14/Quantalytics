@@ -1,9 +1,11 @@
 name: IBM data collector
 
 on:
-  # Every Monday at 03:00 UTC (08:00 Pakistan time)
-  schedule:
-    - cron: "0 3 * * 1"
+  # Weekly schedule paused 2026-11-09: the IBM Cloud trial expired and the
+  # instance is no longer available. Re-enable the block below once a free
+  # Open-plan instance is working again.
+  # schedule:
+  #   - cron: "0 3 * * 1"
   # The "Run workflow" button on the Actions page
   workflow_dispatch:
     inputs:
